@@ -101,7 +101,7 @@ struct EventData
 
     vector<double> mean;
     vector<double> stdv;
-    vector<double> logstdv;
+    vector<double> log_stdv;
     vector<double> ref_align;
     vector<double> ref_index;
     vector<double> ref_like;
@@ -215,9 +215,9 @@ struct EventData
         ref_like = vector<double>(ref_likepr,ref_likepr+length);
         
         // populate the log-stdv vector for precomputation
-        logstdv = vector<double>(this->length);
+        log_stdv = vector<double>(this->length);
         for (int i=0; i<this->length; i++)
-            this->logstdv[i] = log(this->stdv[i]);
+            this->log_stdv[i] = log(this->stdv[i]);
         
         // then initialize the internal indexing helpers
         updaterefs();

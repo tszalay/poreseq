@@ -300,7 +300,8 @@ vector<Sequence> ViterbiMutate(vector<EventData>& events, int nkeep,
             for (int j=0; j<N_STATES; j++)
             {
                 double l = lognormpdf(lvl,model.lev_mean[j],model.lev_stdv[j],model.log_lev[j]);
-                l += logigpdf(sd,model.sd_mean[j],model.sd_lambda[j]);
+                l += logigpdf(sd,model.sd_mean[j],model.sd_lambda[j],
+                                log(sd),model.log_lambda[j]);
                 obs[j*n_seq + nlik-1] = l;
             }
         }

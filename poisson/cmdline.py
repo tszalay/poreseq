@@ -7,47 +7,73 @@ import sys
 def main():
 
     parser = argparse.ArgumentParser(prog='poisson')
-    parser.add_argument('mode', help='command to execute')
-    # set options here!
+    subparsers = parser.add_subparsers(help='sub-command help')
+    
+    # create consensus-calling parser
+    parse_cons = subparsers.add_parser('consensus', help='consensus help')
+    parse_cons.add_argument('ref', help='reference fasta file')
+    parse_cons.add_argument('bam', help='input BAM file')
+    parse_cons.add_argument('dir', help='root fast5 directory')
+    parse_cons.add_argument('-r', '--regions', default=None, nargs='+',
+                        help='regions to correct (eg. 1000:3000 or header_name:1000:3000)')
+    parse_cons.add_argument('-m', '--overlap', type=int, default=300,
+                        help='minimum overlap of aligned reads, in bases')
+    parse_cons.add_argument('-c', '--coverage', type=int, default=25,
+                        help='maximum coverage depth for aligned reads')
+    parse_cons.add_argument('-t', type=int, default=25,
+                        help='number of bases to trim from ends')
+    parse_cons.add_argument('-p', '--params', default=None,
+                        help='parameter file to use')
+    parse_cons.add_argument('-v', '--verbose', action="count", default=0,
+                        help='output verbosity (0-2)')
+    parse_cons.add_argument('-T', '--test', action="store_true", default=False,
+                        help='test mode: seed with loaded sequence, output score as well')
+    parse_cons.set_defaults(func=consensus)
+    
+    # and the variant-calling parser
+    parse_var = subparsers.add_parser('variant', help='variant help')
+    parse_var.add_argument('ref', help='reference fasta file')
+    parse_var.add_argument('bam', help='input BAM file')
+    parse_var.add_argument('dir', help='root fast5 directory')
+    parse_var.add_argument('vars', help='variant sequences to test')
+    
+    parse_var.add_argument('-r', '--regions', default=None, nargs='+',
+                        help='regions to correct (eg. 1000:3000 or header_name:1000:3000)')
+    parse_var.add_argument('-m', '--overlap', type=int, default=300,
+                        help='minimum overlap of aligned reads, in bases')
+    parse_var.add_argument('-c', '--coverage', type=int, default=25,
+                        help='maximum coverage depth for aligned reads')
+    parse_var.add_argument('-p', '--params', default=None,
+                        help='parameter file to use')
+    parse_var.add_argument('-v', '--verbose', action="count", default=0,
+                        help='output verbosity (0-2)')
+    parse_var.set_defaults(func=variant)
+                        
+    # and finally the training parser
+    parse_train = subparsers.add_parser('train', help='train help')
+    parse_train.add_argument('ref', help='reference fasta file')
+    parse_train.add_argument('bam', help='input BAM file')
+    parse_train.add_argument('dir', help='root fast5 directory')
+
+    parse_train.add_argument('-i', '--iter', type=int, default=30,
+                        help='number of training iterations')
+    parse_train.add_argument('-n', '--threads', type=int, default=4,
+                        help='number of threads to use')
+    parse_train.add_argument('-m', '--overlap', type=int, default=300,
+                        help='minimum overlap of aligned reads, in bases')
+    parse_train.add_argument('-c', '--coverage', type=int, default=25,
+                        help='maximum coverage depth for aligned reads')
+    parse_train.add_argument('-p', '--params', default=None,
+                        help='parameter file to use')
+    parse_train.set_defaults(func=train)
     
     args = parser.parse_args()
-    
-    if args.mode == 'consensus':
-        consensus(sys.argv[2:end])
-    elif args.mode == 'variant':
-        variant(sys.argv[2:end])
-    elif args.mode == 'train':
-        train(sys.argv[2:end])
-    else:
-        sys.stderr.write('Invalid mode: {}\n'.format(args.mode))
-
-    sys.exit()
+    args.func(args)
     
 
         
- def consensus(argv):
- 
-    parser = argparse.ArgumentParser(prog='poisson')
-    parser.add_argument('ref', help='reference fasta file')
-    parser.add_argument('bam', help='input BAM file')
-    parser.add_argument('dir', help='root fast5 directory')
-    parser.add_argument('-r', '--regions', default=None, nargs='+',
-                        help='regions to correct (eg. 1000:3000 or header_name:1000:3000)')
-    parser.add_argument('-m', '--overlap', type=int, default=300,
-                        help='minimum overlap of aligned reads, in bases')
-    parser.add_argument('-c', '--coverage', type=int, default=25,
-                        help='maximum coverage depth for aligned reads')
-    parser.add_argument('-t', type=int, default=25,
-                        help='number of bases to trim from ends')
-    parser.add_argument('-p', '--params', default=None,
-                        help='parameter file to use')
-    parser.add_argument('-v', '--verbose', action="count", default=0,
-                        help='output verbosity (0-2)')
-    parser.add_argument('-T', '--test', action="store_true", default=False,
-                        help='test mode: seed with loaded sequence, output score as well')
-                        
-    args = parser.parse_args(argv)
-    
+def consensus(args):
+
     # open reference sequence and see how many there are
     # (if we gave a file with multiple sequences and no region string, generate one)
     refs = SeqIO.index(args.ref, "fasta")
@@ -61,7 +87,7 @@ def main():
                          verbose=args.verbose)
                          
         # test mode output returns accuracy as well
-        if test:
+        if args.test:
             (seq, acc) = seq
             
         # trim ends as requested
@@ -75,50 +101,12 @@ def main():
         sys.stdout.write('>{}\n{}\n'.format(region,seq))
 
         
-def variant(argv):
+def variant(args):
 
-    parser = argparse.ArgumentParser(prog='poisson')
-    parser.add_argument('ref', help='reference fasta file')
-    parser.add_argument('bam', help='input BAM file')
-    parser.add_argument('dir', help='root fast5 directory')
-    parser.add_argument('vars', help='variant sequences to test')
-    
-    parser.add_argument('-r', '--regions', default=None, nargs='+',
-                        help='regions to correct (eg. 1000:3000 or header_name:1000:3000)')
-    parser.add_argument('-m', '--overlap', type=int, default=300,
-                        help='minimum overlap of aligned reads, in bases')
-    parser.add_argument('-c', '--coverage', type=int, default=25,
-                        help='maximum coverage depth for aligned reads')
-    parser.add_argument('-p', '--params', default=None,
-                        help='parameter file to use')
-    parser.add_argument('-v', '--verbose', action="count", default=0,
-                        help='output verbosity (0-2)')
-                        
-    args = parser.parse_args(argv)
-
+    pass
     
     
-def train(argv):
-    
-    parser = argparse.ArgumentParser(prog='poisson')
-    
-    # use the arguments exactly as given, and then call them on each parameter file
-    parser.add_argument('ref', help='reference fasta file')
-    parser.add_argument('bam', help='input BAM file')
-    parser.add_argument('dir', help='root fast5 directory')
-
-    parser.add_argument('-i', '--iter', type=int, default=30,
-                        help='number of training iterations')
-    parser.add_argument('-n', '--threads', type=int, default=4,
-                        help='number of threads to use')
-    parser.add_argument('-m', '--overlap', type=int, default=300,
-                        help='minimum overlap of aligned reads, in bases')
-    parser.add_argument('-c', '--coverage', type=int, default=25,
-                        help='maximum coverage depth for aligned reads')
-    parser.add_argument('-p', '--params', default=None,
-                        help='parameter file to use')
-
-    args = parser.parse_args(argv)
+def train(args):
     
     # now load the specified parameter file
     params = LoadParams(args.params)
@@ -132,7 +120,4 @@ def train(argv):
         # finally, pull out the accuracy from the results
         
         # and load corresponding params file
-        
-        
-        
-        
+        pass

@@ -24,7 +24,7 @@ setup(
                                     "cpp/EventUtil.cpp",
                                     "cpp/Viterbi.cpp"],
                            language="c++",
-                           include_dirs=[numpy.get_include()],
+                           include_dirs=[numpy.get_include(),'.'],
                            extra_compile_args=["-std=c++0x","-O3"],
                            extra_link_args=["-g"])],
     cmdclass = {'build_ext': build_ext}

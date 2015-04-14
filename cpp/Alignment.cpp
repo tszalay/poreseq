@@ -169,7 +169,7 @@ double Alignment::fillColumn()
         lik_obs[i] = lognormpdf(event->mean[i-1],event->model.lev_mean[refstate],event->model.lev_stdv[refstate],event->model.log_lev[refstate]);
         //lik_obs[i] += lognormpdf(event->stdv[i-1],event->model.sd_mean[refstate],event->model.sd_stdv[refstate],event->model.log_sd[refstate]);
         lik_obs[i] += logigpdf(event->stdv[i-1],event->model.sd_mean[refstate],event->model.sd_lambda[refstate],
-                                event->logstdv[n0-i],event->model.loglambda[refstate]);
+                                event->log_stdv[n0-i],event->model.log_lambda[refstate]);
         lik_obs[i] += params.lik_offset;
     }
     
@@ -346,7 +346,7 @@ double Alignment::fillColumnBack()
         lik_obs[i] = lognormpdf(event->mean[n0-i],event->model.lev_mean[refstate],event->model.lev_stdv[refstate],event->model.log_lev[refstate]);
         //lik_obs[i] += lognormpdf(event->stdv[n0-i],event->model.sd_mean[refstate],event->model.sd_stdv[refstate],event->model.log_sd[refstate]);
         lik_obs[i] += logigpdf(event->stdv[n0-i],event->model.sd_mean[refstate],event->model.sd_lambda[refstate],
-                                event->logstdv[n0-i],event->model.loglambda[refstate]);
+                                event->log_stdv[n0-i],event->model.log_lambda[refstate]);
         lik_obs[i] += params.lik_offset;
     }
     
