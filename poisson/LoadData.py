@@ -35,16 +35,21 @@ def EventsFromBAM(eventdir, bamfile, reginfo, overlap=None, maxcoverage=None):
     # filter events by degree of overlap
     if overlap is not None:
         bamevents = [x for x in bamevents if x.get_overlap(reginfo.start,reginfo.end) >= overlap]
+
+    # and sort them by the amount of overlap, descending
+    bamevents.sort(key = lambda x: x.get_overlap(reginfo.start,reginfo.end), reverse=True)
         
     # filter the event names to be unique
-    evnames = set([x.query_name for x in bamevents])
+    #evnames = set([x.query_name for x in bamevents])
     
     # now filter to get one unique alignment per read
-    bamevents = [next(x for x in bamevents if x.query_name == evname) for evname in evnames]
+    #bamevents = [next(x for x in bamevents if x.query_name == evname) for evname in evnames]
     
     # and if a max number is set, take a subselection
+    # but not randomly, use the most overlapping reads
     if maxcoverage is not None and maxcoverage < len(bamevents):
-        bamevents = random.sample(bamevents,maxcoverage)
+        bamevents = bamevents[0:maxcoverage]
+    #    bamevents = random.sample(bamevents,maxcoverage)
     
     # now loop through and load
     events = []

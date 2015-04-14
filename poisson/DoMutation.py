@@ -73,4 +73,7 @@ def DoMutation(fastafile, bamfile, fast5dir, region=None, overlap=None, maxcover
         errs = np.sum(np.array(inds)==0,0)
         sys.stderr.write("Insertions: {}, Deletions: {}\n".format(errs[0],errs[1]))
     
-    return pa.sequence
+    if test:
+        return (pa.sequence,poisscpp.swalign(pa.sequence,refseq)[0])
+    else:
+        return pa.sequence

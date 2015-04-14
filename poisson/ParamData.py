@@ -1,5 +1,5 @@
 def LoadParams(filename):
-    '''Load paramer configuration file'''
+    '''Load parameter configuration file'''
     params = {}
     with open(filename) as f:
         splitlines = [l.split('=') for l in f.readlines()]
@@ -9,3 +9,9 @@ def LoadParams(filename):
                 params[pname] = float(sl[1])
                 
     return params
+    
+def SaveParams(filename, params):
+    '''Save parameter configuration file'''
+    with open(filename,'w') as f:
+        for p in params:
+            w.write('{} = {}\n',p,params[p])
