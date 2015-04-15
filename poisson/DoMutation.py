@@ -7,7 +7,7 @@ from poisscpp import PoissAlign
 import pdb
 import sys
 
-def DoMutation(fastafile, bamfile, fast5dir, region=None, overlap=None, maxcoverage=None, paramfile=None, verbose=0, test=False):
+def DoMutation(fastafile, bamfile, fast5dir, region=None, paramfile=None, verbose=0, test=False):
 
     reginfo = RegionInfo(region)
     refseq = str(LoadReference(fastafile,reginfo.name))
@@ -16,16 +16,17 @@ def DoMutation(fastafile, bamfile, fast5dir, region=None, overlap=None, maxcover
     if reginfo.start is None and reginfo.end is None:
         reginfo.start = 0
         reginfo.end = len(refseq)-1
-    
-    # now load the events
-    events = EventsFromBAM(fast5dir,bamfile,reginfo=reginfo,overlap=overlap,maxcoverage=maxcoverage)
-    
-    # load and set params, if specified
+        
+    params = {}
+    # load params, if specified
     if paramfile is not None:
         params = LoadParams(paramfile)
+    
+    # now load the events
+    events = EventsFromBAM(fast5dir,bamfile,reginfo,params)
+
+    if len(params) > 0:
         [x.setparams(params) for x in events]
-    else:
-        params = {}
     
     if verbose > 0:
         sys.stderr.write("Running with " + str(len(events)) + " events\n")
@@ -67,13 +68,16 @@ def DoMutation(fastafile, bamfile, fast5dir, region=None, overlap=None, maxcover
         if nbases == 0:
             break
         
+    # trim ends as requested
+    if 'end_trim' in params and len(pa.sequence) > 2*params['end_trim']:
+        pa.sequence = pa.sequence[params['end_trim']:-params['end_trim']]
+
+        
     # find the aligned sequence stats
     if test:
         acc,inds = poisscpp.swalign(pa.sequence,refseq)
         errs = np.sum(np.array(inds)==0,0)
         sys.stderr.write("Insertions: {}, Deletions: {}\n".format(errs[0],errs[1]))
+        return (pa.sequence, acc)
     
-    if test:
-        return (pa.sequence,poisscpp.swalign(pa.sequence,refseq)[0])
-    else:
-        return pa.sequence
+    return pa.sequence

@@ -2,7 +2,6 @@ import os
 import pysam
 import pdb
 import numpy as np
-import random
 from Bio import SeqIO
 
 from EventData import PoissEvent
@@ -18,7 +17,7 @@ def LoadReference(fastafile, refname=None):
             
     return refs[refname].seq
 
-def EventsFromBAM(eventdir, bamfile, reginfo, overlap=None, maxcoverage=None):
+def EventsFromBAM(eventdir, bamfile, reginfo, params):
     
     # first, load a bam file
     bamfile = pysam.AlignmentFile(bamfile, "rb")
@@ -33,8 +32,8 @@ def EventsFromBAM(eventdir, bamfile, reginfo, overlap=None, maxcoverage=None):
     bamevents = [x for x in bamfile.fetch(reference=reginfo.name,start=reginfo.start,end=reginfo.end)]
     
     # filter events by degree of overlap
-    if overlap is not None:
-        bamevents = [x for x in bamevents if x.get_overlap(reginfo.start,reginfo.end) >= overlap]
+    if 'min_overlap' in params:
+        bamevents = [x for x in bamevents if x.get_overlap(reginfo.start,reginfo.end) >= params['min_overlap']]
 
     # and sort them by the amount of overlap, descending
     bamevents.sort(key = lambda x: x.get_overlap(reginfo.start,reginfo.end), reverse=True)
@@ -47,9 +46,8 @@ def EventsFromBAM(eventdir, bamfile, reginfo, overlap=None, maxcoverage=None):
     
     # and if a max number is set, take a subselection
     # but not randomly, use the most overlapping reads
-    if maxcoverage is not None and maxcoverage < len(bamevents):
-        bamevents = bamevents[0:maxcoverage]
-    #    bamevents = random.sample(bamevents,maxcoverage)
+    if 'max_coverage' in params and len(bamevents) > params['max_coverage']:
+        bamevents = bamevents[0:int(params['max_coverage'])]
     
     # now loop through and load
     events = []

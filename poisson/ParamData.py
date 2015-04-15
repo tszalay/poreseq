@@ -14,4 +14,4 @@ def SaveParams(filename, params):
     '''Save parameter configuration file'''
     with open(filename,'w') as f:
         for p in params:
-            w.write('{} = {}\n',p,params[p])
+            f.write('{} = {}\n',p,params[p])

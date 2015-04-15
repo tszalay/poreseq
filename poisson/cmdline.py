@@ -9,6 +9,16 @@ def main():
     parser = argparse.ArgumentParser(prog='poisson')
     subparsers = parser.add_subparsers(help='sub-command help')
     
+    # create assembly pipeline parser
+    parse_assm = subparsers.add_parser('assemble', help='assemble help')
+    parse_assm.add_argument('ref', help='reference fasta file')
+    parse_assm.add_argument('dir', help='root fast5 directory')
+    parse_assm.add_argument('-p', '--params', default=None,
+                        help='parameter file to use')
+    parse_assm.add_argument('-v', '--verbose', action="count", default=0,
+                        help='output verbosity (0-2)')
+    parse_assm.set_defaults(func=assemble)
+    
     # create consensus-calling parser
     parse_cons = subparsers.add_parser('consensus', help='consensus help')
     parse_cons.add_argument('ref', help='reference fasta file')
@@ -16,12 +26,6 @@ def main():
     parse_cons.add_argument('dir', help='root fast5 directory')
     parse_cons.add_argument('-r', '--regions', default=None, nargs='+',
                         help='regions to correct (eg. 1000:3000 or header_name:1000:3000)')
-    parse_cons.add_argument('-m', '--overlap', type=int, default=300,
-                        help='minimum overlap of aligned reads, in bases')
-    parse_cons.add_argument('-c', '--coverage', type=int, default=25,
-                        help='maximum coverage depth for aligned reads')
-    parse_cons.add_argument('-t', type=int, default=25,
-                        help='number of bases to trim from ends')
     parse_cons.add_argument('-p', '--params', default=None,
                         help='parameter file to use')
     parse_cons.add_argument('-v', '--verbose', action="count", default=0,
@@ -39,10 +43,6 @@ def main():
     
     parse_var.add_argument('-r', '--regions', default=None, nargs='+',
                         help='regions to correct (eg. 1000:3000 or header_name:1000:3000)')
-    parse_var.add_argument('-m', '--overlap', type=int, default=300,
-                        help='minimum overlap of aligned reads, in bases')
-    parse_var.add_argument('-c', '--coverage', type=int, default=25,
-                        help='maximum coverage depth for aligned reads')
     parse_var.add_argument('-p', '--params', default=None,
                         help='parameter file to use')
     parse_var.add_argument('-v', '--verbose', action="count", default=0,
@@ -59,10 +59,6 @@ def main():
                         help='number of training iterations')
     parse_train.add_argument('-n', '--threads', type=int, default=4,
                         help='number of threads to use')
-    parse_train.add_argument('-m', '--overlap', type=int, default=300,
-                        help='minimum overlap of aligned reads, in bases')
-    parse_train.add_argument('-c', '--coverage', type=int, default=25,
-                        help='maximum coverage depth for aligned reads')
     parse_train.add_argument('-p', '--params', default=None,
                         help='parameter file to use')
     parse_train.set_defaults(func=train)
@@ -70,6 +66,9 @@ def main():
     args = parser.parse_args()
     args.func(args)
     
+
+def assemble(args):
+    pass
 
         
 def consensus(args):
@@ -83,16 +82,11 @@ def consensus(args):
     # now loop through and refine sequences
     for region in args.regions:
         seq = DoMutation(args.ref,args.bam,args.dir,paramfile=args.params,region=region,
-                         overlap=args.overlap,maxcoverage=args.coverage,test=args.test,
-                         verbose=args.verbose)
+                         test=args.test,verbose=args.verbose)
                          
         # test mode output returns accuracy as well
         if args.test:
             (seq, acc) = seq
-            
-        # trim ends as requested
-        if len(seq) > 2*args.t:
-            seq = seq[args.t:-args.t]
             
         # print corrected fasta string with region as header
         if args.test:

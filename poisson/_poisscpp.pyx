@@ -136,6 +136,10 @@ cdef AlignData PythonToAlignData(obj):
         data.params.verbose = obj.params['verbose']
     if 'lik_offset' in obj.params:
         data.params.lik_offset = obj.params['lik_offset']
+    if 'realign_width' in obj.params:
+        data.params.realign_width = obj.params['realign_width']
+    if 'scoring_width' in obj.params:
+        data.params.scoring_width = obj.params['scoring_width']
             
     return data
     
@@ -173,9 +177,7 @@ class PoissAlign:
         cdef vector[Sequence] sequences
         
         if seqs == 'self':
-            #if len(self.events) > 20:
-            #    seqs = random.sample([x.sequence for x in self.events[::2]],10)
-            #else:
+            # use every other sequence to account for template/complement
             seqs = [x.sequence for x in self.events[::2]]
         elif seqs == 'viterbi':
             seqs = None
@@ -201,10 +203,12 @@ class PoissAlign:
         
     def Refine(self):
         cdef AlignData data = PythonToAlignData(self)
-        data.params.scoring_width = 20
+        # override scoring width with point mutation width if available
+        if 'point_width' in self.params:
+            data.params.scoring_width = self.params['point_width']
         cdef vector[MutInfo] mutations = FindPointMutations(data)
         cdef vector[MutScore] scores = ScoreMutations(data,mutations)
-        cdef int nbases = MakeMutations(data,scores)
+        nbases = MakeMutations(data,scores)
         self.sequence = data.sequence.bases
         self.events = UpdatePythonEvents(self.events, data)
         return nbases

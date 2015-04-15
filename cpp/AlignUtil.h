@@ -61,7 +61,7 @@ struct AlignParams
     int realign_width;
     int verbose;
     
-    AlignParams() : lik_offset(4.5), scoring_width(50), realign_width(300), verbose(0)
+    AlignParams() : lik_offset(4.5), scoring_width(150), realign_width(300), verbose(0)
     {}
 };
 
