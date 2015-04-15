@@ -11,10 +11,11 @@ setup(
     author="Tamas Szalay",
     packages=find_packages(),
     install_requires=["Cython>0.18"],
+    scripts=['scripts/poissalign'],
     entry_points={
         'console_scripts': [
-        'poisson = poisson.cmdline:main',
-    ],},
+        'poisson = poisson.cmdline:main'],
+    },
     ext_modules=[Extension(name="poisson.poisscpp",
                            sources=["poisson/_poisscpp.pyx",
                                     "cpp/MakeMutations.cpp",

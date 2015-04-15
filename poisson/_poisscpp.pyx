@@ -14,6 +14,7 @@ cdef extern from "cpp/AlignUtil.h":
     cdef cppclass AlignParams:
         AlignParams()
         int verbose 
+        int realign_width
         int scoring_width
         double lik_offset
 
