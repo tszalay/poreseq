@@ -1,6 +1,6 @@
 #from distutils.core import setup
 #from distutils.extension import Extension
-from setuptools import setup, Extension #, find_packages
+from setuptools import setup, Extension, find_packages
 from Cython.Distutils import build_ext
 import numpy
 
@@ -9,7 +9,7 @@ setup(
     version="0.1",
     description="POISSON alignment utility for nanopore sequencing data",
     author="Tamas Szalay",
-    packages=["poisson"],
+    packages=find_packages(),
     install_requires=["Cython>0.18"],
     entry_points={
         'console_scripts': [
