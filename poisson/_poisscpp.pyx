@@ -13,7 +13,7 @@ from libcpp.string cimport string
 cdef extern from "cpp/AlignUtil.h":
     cdef cppclass AlignParams:
         AlignParams()
-        int verbose
+        int verbose 
         int scoring_width
         double lik_offset
 

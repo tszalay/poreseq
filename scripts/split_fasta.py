@@ -2,6 +2,7 @@
 
 import sys
 import os
+import random
 from Bio import SeqIO
 
 def split_fasta(fastafile, nchunks):
@@ -18,7 +19,7 @@ def split_fasta(fastafile, nchunks):
     # now loop through the sequences
     for ref in refs:
         fileind = random.randint(0,nchunks-1)
-        chunks[fileind].write(refs[ref])
+        chunks[fileind].write(refs[ref].format('fasta'))
     
 if __name__ == "__main__":
     

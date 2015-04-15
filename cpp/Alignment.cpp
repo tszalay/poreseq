@@ -21,9 +21,9 @@ enum AL_MOVE
     L_SKIP = 0,
     UL_MATCH = 1,
     U_INSERT = 2,
-    U_STAY = 3,
-    U_EXTEND = 4,
-    U_BADEXTEND = 5,
+    UL_IGNORE = 3,
+    U_STAY = 4,
+    U_EXTEND = 5,
     Z_IMPLICIT = 255
 };
 
@@ -193,7 +193,7 @@ double Alignment::fillColumn()
 
     for (int i=i0; i<=i1; i++)
     {
-        double liks[AL_BACKS] = {0.0,0.0,0.0,-inf,-inf,-inf};
+        double liks[AL_BACKS] = {0.0,0.0,0.0,0.0,-inf,-inf};
         uint8_t likbp[AL_BACKS] = {0,1,2,3,4,5};
         double lobs = lik_obs[i];
 
@@ -214,6 +214,8 @@ double Alignment::fillColumn()
         {
             // valid
             liks[UL_MATCH] = prevlik[i-1] + lobs;
+            // or ignore
+            liks[UL_IGNORE] = prevlik[i-1] + event->model.lik_insert;
         }
         else
         {
@@ -232,13 +234,10 @@ double Alignment::fillColumn()
             liks[U_INSERT] = curlik[i-1] + event->model.lik_insert;
             // or extend a stay, from stay matrix to stay matrix
             liks[U_EXTEND] = curstay[i-1] + lobs + event->model.lik_extend;
-            // or extend a stay without counting observation prob.
-            // um this isn't being used, same as extend, disregard entirely
-            liks[U_BADEXTEND] = curstay[i-1] + lobs + event->model.lik_extend;
         }
 
         // first, update stay matrix with stays or extends
-        for (int k=3; k<6; k++)
+        for (int k=4; k<6; k++)
         {
             if (liks[k] > curstay[i])
             {
@@ -250,7 +249,7 @@ double Alignment::fillColumn()
         // just means we don't end on a stay - oh well...
 
         // ok, now first check transitions from main matrix
-        for (int k=0; k<3; k++)
+        for (int k=0; k<4; k++)
         {
             if (liks[k] > curlik[i])
             {
@@ -370,7 +369,7 @@ double Alignment::fillColumnBack()
 
     for (int i=i0; i<=i1; i++)
     {
-        double liks[AL_BACKS] = {0.0,0.0,0.0,-inf,-inf,-inf};
+        double liks[AL_BACKS] = {0.0,0.0,0.0,0.0,-inf,-inf};
         uint8_t likbp[AL_BACKS] = {0,1,2,3,4,5};
         
         // do implicit zeros if our indices don't work out
@@ -387,6 +386,7 @@ double Alignment::fillColumnBack()
         if (i > p0 && i <= p1)
         {
             liks[UL_MATCH] = prevlik[i-1] + prevobs[i-1];
+            liks[UL_IGNORE] = prevlik[i-1] + event->model.lik_insert;
         }
         else
         {
@@ -404,12 +404,10 @@ double Alignment::fillColumnBack()
             liks[U_INSERT] = curlik[i-1] + event->model.lik_insert;
             // or extend a stay, from stay matrix to stay matrix
             liks[U_EXTEND] = curstay[i-1] + curobs[i-1] + event->model.lik_extend;
-            // or extend a stay without counting observation prob.
-            liks[U_BADEXTEND] = curstay[i-1] + curobs[i-1] + event->model.lik_extend;
         }
 
         // first, update stay matrix with stays or extends
-        for (int k=3; k<6; k++)
+        for (int k=4; k<6; k++)
         {
             if (liks[k] > curstay[i])
             {
@@ -421,7 +419,7 @@ double Alignment::fillColumnBack()
         // just means we don't end on a stay - oh well...
 
         // ok, now first check transitions from main matrix
-        for (int k=0; k<3; k++)
+        for (int k=0; k<4; k++)
         {
             if (liks[k] > curlik[i])
             {
@@ -558,6 +556,14 @@ EventData* Alignment::backtrace()
                 i--;
                 j--;
                 break;
+            case UL_IGNORE:
+                // "mismatch", set as insertion
+                inds_i.push_back(i);
+                inds_j.push_back(-1);
+                ref_like.push_back(score);
+                i--;
+                j--;
+                break;                
             case U_INSERT:
                 // insert, save but -1 on ref
                 inds_i.push_back(i);
@@ -583,13 +589,6 @@ EventData* Alignment::backtrace()
                 // extending stay, save
                 inds_i.push_back(i);
                 inds_j.push_back(j);
-                ref_like.push_back(score);
-                i--;
-                break;
-            case U_BADEXTEND:
-                // bad extending stay, same as insert
-                inds_i.push_back(i);
-                inds_j.push_back(-1);
                 ref_like.push_back(score);
                 i--;
                 break;
