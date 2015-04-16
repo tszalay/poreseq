@@ -70,7 +70,7 @@ def DoMutation(fastafile, bamfile, fast5dir, region=None, paramfile=None, verbos
         
     # trim ends as requested
     if 'end_trim' in params and len(pa.sequence) > 2*params['end_trim']:
-        pa.sequence = pa.sequence[params['end_trim']:-params['end_trim']]
+        pa.sequence = pa.sequence[int(params['end_trim']):-int(params['end_trim'])]
 
         
     # find the aligned sequence stats
