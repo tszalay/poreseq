@@ -96,10 +96,10 @@ def assemble(args):
     # third step: refine reads using poisson
     commands += ('ls ' + os.path.join(args.output,'reads.*.fasta') + ' | ' +
                     'parallel -P ' + str(args.threads) + ' poisson consensus {1} {1}.bam ' + 
-                    ' . ' + paramstr + ' > corrected.fasta\n')
+                    ' . -v ' + paramstr + '\n')
     
     # last step: assemble reads using celera (or other assembler)
-    commands += 'poissemble ' + os.path.join(args.output,'reads.*.fasta.corr') + '\n'
+    commands += 'poissemble ' + os.path.join(args.output,'corrected.fasta') + '\n'
     
     # save to output dir
     runscript = os.path.join(args.output,'run.sh')
@@ -122,9 +122,13 @@ def consensus(args):
         args.regions = list(refs.keys())
 
     # now loop through and refine sequences
+    # (continue on errors)
     for region in args.regions:
-        seq = Mutate(args.ref,args.bam,args.dir,paramfile=args.params,region=region,
+        try:
+            seq = Mutate(args.ref,args.bam,args.dir,paramfile=args.params,region=region,
                          test=args.test,verbose=args.verbose)
+        except:
+             continue
                          
         # test mode output returns accuracy as well
         if args.test:
@@ -135,6 +139,7 @@ def consensus(args):
             region += ' [' + str(round(acc,2)) + ']'
             
         sys.stdout.write('>{}\n{}\n'.format(region,seq))
+        sys.stdout.flush()
         
 
         

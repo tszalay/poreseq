@@ -182,7 +182,7 @@ class PoissAlign:
             seqs = [x.sequence for x in self.events[::2]]
         elif seqs == 'viterbi':
             seqs = None
-            sequences = ViterbiMutate(data.events,16,0.05,0.01,0.33,0.75,True)
+            sequences = ViterbiMutate(data.events,16,0.05,0.01,0.33,0.75,self.params['verbose'])
             
         if seqs:
             sequences = PythonToSequences(seqs)

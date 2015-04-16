@@ -11,7 +11,10 @@ setup(
     author="Tamas Szalay",
     packages=find_packages(),
     install_requires=["Cython>0.18"],
-    scripts=['scripts/poissalign'],
+    scripts=[
+        'scripts/poissalign',
+        'scripts/poissemble'
+    ],
     entry_points={
         'console_scripts': [
         'poisson = poisson.cmdline:main',

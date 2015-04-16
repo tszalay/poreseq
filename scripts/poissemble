@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ $# -lt 1 ]; then
+    echo "usage: poissemble [reads fasta]"
+    exit
+fi
+
+PBcR -length 500 -partitions 200 -l K12_OX -s oxford.spec -fastq all.2d.fastq  genomeSize=4650000

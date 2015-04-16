@@ -46,6 +46,8 @@ def EventsFromBAM(eventdir, bamfile, reginfo, params):
     
     # and if a max number is set, take a subselection
     # but not randomly, use the most overlapping reads
+    if 'min_coverage' in params and len(bamevents) < params['min_coverage']:
+        raise Exception('Insufficient coverage!')
     if 'max_coverage' in params and len(bamevents) > params['max_coverage']:
         bamevents = bamevents[0:int(params['max_coverage'])]
     
