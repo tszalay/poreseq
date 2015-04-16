@@ -2,9 +2,11 @@ from Mutate import *
 from Util import *
 from ParamData import *
 
+import string
 import argparse
 import sys
 import os
+import stat
 
 def main():
 
@@ -18,8 +20,8 @@ def main():
     parse_assm.add_argument('-p', '--params', default=None,
                         help='parameter file to use')
     parse_assm.add_argument('-n', '--threads', type=int, default=1)
-    parse_assm.add_argument('-v', '--verbose', action="count", default=0,
-                        help='output verbosity (0-2)')
+    parse_assm.add_argument('-w', '--write', action="store_true", default=False,
+                        help='write commands only, do not run')
     parse_assm.set_defaults(func=assemble)
     
     # create consensus-calling parser
@@ -76,13 +78,40 @@ def assemble(args):
     if not os.path.isdir(args.output):
         os.mkdir(args.output)
     
+    commands = ''
+
     # first step: extract and split fasta files
-    
+    commands += 'poissextract -p ' + string.join(args.dirs) + ' ' + os.path.join(args.output,'reads.fasta') + '\n'
+    commands += 'poisssplit ' + os.path.join(args.output,'reads.fasta') + ' ' + str(args.threads) + '\n'
     
     # second step: align fasta files -> bams
-    
-    pass
+    commands += ('ls ' + os.path.join(args.output,'reads.*.fasta') + ' | ' +
+                    'parallel -P ' + str(args.threads) + ' poissalign {1} ' + 
+                    os.path.join(args.output,'reads.fasta') + '\n')
+                    
+    paramstr = ''
+    if args.params is not None:
+        paramstr = '-p ' + args.params
 
+    # third step: refine reads using poisson
+    commands += ('ls ' + os.path.join(args.output,'reads.*.fasta') + ' | ' +
+                    'parallel -P ' + str(args.threads) + ' poisson consensus {1} {1}.bam ' + 
+                    ' . ' + paramstr + ' > corrected.fasta\n')
+    
+    # last step: assemble reads using celera (or other assembler)
+    commands += 'poissemble ' + os.path.join(args.output,'reads.*.fasta.corr') + '\n'
+    
+    # save to output dir
+    runscript = os.path.join(args.output,'run.sh')
+    with open(runscript,'w') as f:
+        f.write(commands)
+    st = os.stat(runscript)
+    os.chmod(runscript, st.st_mode | stat.S_IEXEC)
+        
+    # and run, if requested
+    if not args.write:
+        os.system(runscript)
+        
         
 def consensus(args):
 
