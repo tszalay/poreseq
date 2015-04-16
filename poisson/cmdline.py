@@ -1,8 +1,10 @@
-import argparse
-from DoMutation import *
+from Mutate import *
 from Util import *
 from ParamData import *
+
+import argparse
 import sys
+import os
 
 def main():
 
@@ -11,10 +13,11 @@ def main():
     
     # create assembly pipeline parser
     parse_assm = subparsers.add_parser('assemble', help='assemble help')
-    parse_assm.add_argument('ref', help='reference fasta file')
-    parse_assm.add_argument('dir', help='root fast5 directory')
+    parse_assm.add_argument('output', help='output directory for files')
+    parse_assm.add_argument('dirs', nargs='+', help='fast5 directories containing reads')
     parse_assm.add_argument('-p', '--params', default=None,
                         help='parameter file to use')
+    parse_assm.add_argument('-n', '--threads', type=int, default=1)
     parse_assm.add_argument('-v', '--verbose', action="count", default=0,
                         help='output verbosity (0-2)')
     parse_assm.set_defaults(func=assemble)
@@ -68,6 +71,16 @@ def main():
     
 
 def assemble(args):
+
+    # start by creating directory to hold all of the generated files
+    if not os.path.isdir(args.output):
+        os.mkdir(args.output)
+    
+    # first step: extract and split fasta files
+    
+    
+    # second step: align fasta files -> bams
+    
     pass
 
         
@@ -81,7 +94,7 @@ def consensus(args):
 
     # now loop through and refine sequences
     for region in args.regions:
-        seq = DoMutation(args.ref,args.bam,args.dir,paramfile=args.params,region=region,
+        seq = Mutate(args.ref,args.bam,args.dir,paramfile=args.params,region=region,
                          test=args.test,verbose=args.verbose)
                          
         # test mode output returns accuracy as well
@@ -93,6 +106,7 @@ def consensus(args):
             region += ' [' + str(round(acc,2)) + ']'
             
         sys.stdout.write('>{}\n{}\n'.format(region,seq))
+        
 
         
 def variant(args):

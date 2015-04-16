@@ -7,7 +7,7 @@ from poisscpp import PoissAlign
 import pdb
 import sys
 
-def DoMutation(fastafile, bamfile, fast5dir, region=None, paramfile=None, verbose=0, test=False):
+def Mutate(fastafile, bamfile, fast5dir, region=None, paramfile=None, verbose=0, test=False):
 
     reginfo = RegionInfo(region)
     refseq = str(LoadReference(fastafile,reginfo.name))

@@ -14,7 +14,9 @@ setup(
     scripts=['scripts/poissalign'],
     entry_points={
         'console_scripts': [
-        'poisson = poisson.cmdline:main'],
+        'poisson = poisson.cmdline:main',
+        'poissextract = poisson.extract_fasta:run',
+        'poisssplit = poisson.split_fasta:run'],
     },
     ext_modules=[Extension(name="poisson.poisscpp",
                            sources=["poisson/_poisscpp.pyx",

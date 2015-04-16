@@ -58,7 +58,8 @@ def extract_fasta(fast5files, fastafile=None, addpath=False, force=False):
     
     fasta.close()
 
-if __name__ == "__main__":
+
+def run():
     
     fast5files = []
     fastafile = None
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     force = False
     
     if len(sys.argv) < 2:
-        print "usage: extract_fasta.py [-p] fast5-dir/files [fasta file]"
+        print "usage: poissextract [-p] fast5-dir/files [fasta file]"
         print "    (-p option includes fast5 path in fasta header names)"
         print "\nexample: extract_fasta.py data/run_23/*.fast5 out.fasta"
         sys.exit()

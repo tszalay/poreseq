@@ -21,10 +21,10 @@ def split_fasta(fastafile, nchunks):
         fileind = random.randint(0,nchunks-1)
         chunks[fileind].write(refs[ref].format('fasta'))
     
-if __name__ == "__main__":
+def run():
     
     if len(sys.argv) < 3:
-        print "usage: split_fasta fasta num_chunks"
+        print "usage: poisssplit fasta num_chunks"
         sys.exit()
             
     split_fasta(sys.argv[1],int(sys.argv[2]))
