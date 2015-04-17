@@ -127,7 +127,8 @@ def consensus(args):
         try:
             seq = Mutate(args.ref,args.bam,args.dir,paramfile=args.params,region=region,
                          test=args.test,verbose=args.verbose)
-        except:
+        except Exception as e:
+             sys.stderr.write('Skipping {}: {}\n'.format(region,str(e)))
              continue
                          
         # test mode output returns accuracy as well
