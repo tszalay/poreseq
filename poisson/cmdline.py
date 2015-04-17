@@ -87,7 +87,7 @@ def assemble(args):
     # second step: align fasta files -> bams
     commands += ('ls ' + os.path.join(args.output,'reads.*.fasta') + ' | ' +
                     'parallel -P ' + str(args.threads) + ' poissalign {1} ' + 
-                    os.path.join(args.output,'reads.fasta') + ' {1}.bam\n')
+                    os.path.join(args.output,'reads.fasta') + ' {1}\n')
                     
     paramstr = ''
     if args.params is not None:
