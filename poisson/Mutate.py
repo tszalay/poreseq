@@ -28,11 +28,11 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, paramfile=None, verbose=0,
     if len(params) > 0:
         [x.setparams(params) for x in events]
     
-    if verbose > 0:
-        sys.stderr.write("Running with " + str(len(events)) + " events\n")
-
     #pdb.set_trace()
     refseq = refseq[reginfo.start:reginfo.end]
+
+    if verbose > 0:
+        sys.stderr.write("Mutating {} bases using {} events\n".format(len(refseq),len(events)))
 
     if test:
         seq = ""
@@ -59,7 +59,9 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, paramfile=None, verbose=0,
         sys.stderr.write("Accuracy: " + str(round(acc,1)) + "%\n")
 
     for i in range(3):
+        
         pa.Mutate(seqs='viterbi')
+        
         nbases = pa.Refine()
         
         if test:
