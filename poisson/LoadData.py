@@ -48,9 +48,19 @@ def EventsFromBAM(eventdir, bamfile, reginfo, params):
     # but not randomly, use the most overlapping reads
     if 'min_coverage' in params and len(bamevents) < params['min_coverage']:
         raise Exception('Insufficient coverage!')
-    if 'max_coverage' in params and len(bamevents) > params['max_coverage']:
-        bamevents = bamevents[0:int(params['max_coverage'])]
     
+    # now go through and collect the events we want to keep (up to max coverage, and unique)
+    bamnames = []
+    newevents = []
+    for bamev in bamevents:
+        if not bamev.query_name in bamnames:
+            bamnames.append(bamev.query_name)
+            newevents.append(bamev)
+        # stop if we have hit our desired coverage level
+        if 'max_coverage' in params and len(newevents) >= params['max_coverage']:
+            break
+        
+    bamevents = newevents
     # now loop through and load
     events = []
     for bamev in bamevents:

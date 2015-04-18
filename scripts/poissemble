@@ -5,4 +5,5 @@ if [ $# -lt 1 ]; then
     exit
 fi
 
-PBcR -length 500 -partitions 200 -l K12_OX -s oxford.spec -fastq all.2d.fastq  genomeSize=4650000
+java -jar convertFastaAndQualToFastq.jar $1 > $1.fastq
+PBcR -length 500 -l assembly -s oxford.spec -fastq $1.fastq  genomeSize=48500

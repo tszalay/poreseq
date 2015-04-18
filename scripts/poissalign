@@ -10,6 +10,7 @@ samtools faidx $1
 # build a database of it, same name
 lastdb $1 $1
 # align the fasta file to it
-lastal -s 2 -T 0 -Q 0 -a 1 $1 $2 | last-map-probs | maf-convert sam | samtools view -t $1.fai -S -b - | samtools sort - $3
+#lastal -s 2 -T 0 -Q 0 -a 1 -b 1 -r 1 -q 1 $1 $2 | last-map-probs -m 0.4 | maf-convert sam | samtools view -t $1.fai -S -b - | samtools sort - $3
+lastal -s 2 -T 0 -Q 0 -a 1 -b 1 -r 1 -q 1 $1 $2 | maf-convert sam | samtools view -t $1.fai -S -b - | samtools sort - $3
 samtools index $3.bam
 
