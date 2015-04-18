@@ -27,7 +27,7 @@ vector<MutScore> ScoreMutations(AlignData& data, const vector<MutInfo>& muts)
     
     if (data.params.verbose)
     {
-        cerr << "Scoring";
+        cerr << "Scoring (" << data.params.scoring_width << ")";
         cerr.flush();
     }
 

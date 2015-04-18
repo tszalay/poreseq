@@ -61,7 +61,6 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, paramfile=None, verbose=0,
     for i in range(3):
         
         pa.Mutate(seqs='viterbi')
-        
         nbases = pa.Refine()
         
         if test:
