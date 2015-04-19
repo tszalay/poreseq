@@ -11,8 +11,10 @@ def get_fasta(filename):
     f = h5py.File(filename,'r')
     # get the Oxford-called 2D sequence
     seqdata = f['/Analyses/Basecall_2D_000/BaseCalled_2D/Fastq']
-    # load sequence (parse from Fastq)
-    return seqdata[()].split('\n')[1]
+    seq = seqdata[()].split('\n')[1]
+    # and close the h5py file, just in case
+    f.close()
+    return seq
     
 def extract_fasta(fast5files, fastafile=None, addpath=False, force=False):
 
