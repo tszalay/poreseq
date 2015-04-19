@@ -8,6 +8,8 @@ import sys
 import os
 import stat
 
+from multiprocessing import Pool
+
 def main():
 
     parser = argparse.ArgumentParser(prog='poisson')
@@ -67,7 +69,9 @@ def main():
     parse_train.add_argument('-n', '--threads', type=int, default=4,
                         help='number of threads to use')
     parse_train.add_argument('-p', '--params', default=None,
-                        help='parameter file to use')
+                        help='initial parameter file to use')
+    parse_train.add_argument('-r', '--region', default=None, 
+                        help='region to train on (eg. 1000:3000 or header_name:1000:3000)')
     parse_train.set_defaults(func=train)
     
     args = parser.parse_args()
@@ -176,22 +180,38 @@ def consensus(args):
 
         
 def variant(args):
-
+    pdb.set_trace()
     pass
     
-    
+
+# nice trick from stackoverflow to allow function pickling
+class trainhelper(object):
+    def __init__(self, _args):
+        self.args = _args
+    def __call__(self, params):
+        Mutate(self.args.ref,self.args.bam,self.args.dir,params=params,region=self.args.region,
+               test=True,verbose=False)
+
 def train(args):
     
-    # now load the specified parameter file
+    # load the specified parameter file
     params = LoadParams(args.params)
     
     # and start the iterations
     for i in range(args.iter):
         # first, generate modified parameter files and save them
+        paramlist = VaryParams(params)
+        #paramnames = ['train{}.conf'.format(j) for j in range(len(paramlist))]
         
-        # next, use parallel to spin up all of them at once
+        #for j,par in enumerate(paramlist):
+        #    SaveParams(paramnames[j],par)
         
-        # finally, pull out the accuracy from the results
+        # use a python multiprocess pool to run mutation on all of them
+        pool = Pool(processes=args.threads)
+        seqs = pool.map(trainhelper(args), paramlist)
+        accs = [s[1] for s in seqs]
         
-        # and load corresponding params file
-        pass
+        # and update the global params
+        params = paramlist[np.argmax(accs)]
+        # and intermittently save it
+        SaveParams('train_best.conf',params)

@@ -17,4 +17,23 @@ def SaveParams(filename, params):
     '''Save parameter configuration file'''
     with open(filename,'w') as f:
         for p in params:
-            f.write('{} = {}\n',p,params[p])
+            f.write('{} = {}\n'.format(p,params[p]))
+            
+def VaryParams(params):
+    '''Return a list of param dicts with modifications'''
+
+    paramlist = []
+    fac = 1.2
+    
+    for p in params:
+        # only vary relevant (non-configurational) params
+        if p[-2:]=='_t' or p[-2:]=='_c':
+            # multiply and divide it by a certain factor
+            newparams = params.copy()
+            newparams[p] = params[p]*fac
+            paramlist.append(newparams)
+            newparams = params.copy()
+            newparams[p] = params[p]/fac
+            paramlist.append(newparams)
+            
+    return paramlist
