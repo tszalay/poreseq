@@ -35,6 +35,8 @@ def main():
                         help='parameter file to use')
     parse_cons.add_argument('-v', '--verbose', action="count", default=0,
                         help='output verbosity (0-2)')
+    parse_cons.add_argument('-s', '--stdout', action="store_true", default=False,
+                        help='send corrected sequences to stdout instead of file')
     parse_cons.add_argument('-T', '--test', action="store_true", default=False,
                         help='test mode: seed with loaded sequence, output score as well')
     parse_cons.set_defaults(func=consensus)
@@ -140,6 +142,13 @@ def consensus(args):
             else:
                 # or just append the name directly
                 args.regions.append(refid)
+                
+    # now create output file for writing (or stdout)
+    if args.stdout:
+        outfile = sys.stdout
+    else:
+        fastabase = os.path.splitext(args.ref)[0]
+        outfile = open(fastabase+'.corr.fasta','w')
             
     # now loop through and refine sequences
     # (continue on errors)
@@ -159,8 +168,8 @@ def consensus(args):
         if args.test:
             region += ' [' + str(round(acc,2)) + ']'
             
-        sys.stdout.write('>{}\n{}\n'.format(region,seq))
-        sys.stdout.flush()
+        outfile.write('>{}\n{}\n'.format(region,seq))
+        outfile.flush()
         
 
         

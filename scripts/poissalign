@@ -14,3 +14,4 @@ lastdb $1 $1
 lastal -s 2 -T 0 -Q 0 -a 1 -b 1 -r 1 -q 1 $1 $2 | maf-convert sam | samtools view -t $1.fai -S -b - | samtools sort - $3
 samtools index $3.bam
 
+rm -f $1.bck $1.des $1.prj $1.sds $1.ssp $1.suf $1.tis
