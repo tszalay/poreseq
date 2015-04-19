@@ -1,6 +1,9 @@
 def LoadParams(filename):
     '''Load parameter configuration file'''
     params = {}
+    if filename is None:
+        return params
+        
     with open(filename) as f:
         splitlines = [l.split('=') for l in f.readlines()]
         for sl in splitlines:

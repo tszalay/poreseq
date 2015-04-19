@@ -7,7 +7,7 @@ from poisscpp import PoissAlign
 import pdb
 import sys
 
-def Mutate(fastafile, bamfile, fast5dir, region=None, paramfile=None, verbose=0, test=False):
+def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test=False):
 
     reginfo = RegionInfo(region)
     refseq = str(LoadReference(fastafile,reginfo.name))
@@ -17,11 +17,6 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, paramfile=None, verbose=0,
         reginfo.start = 0
         reginfo.end = len(refseq)-1
         
-    params = {}
-    # load params, if specified
-    if paramfile is not None:
-        params = LoadParams(paramfile)
-    
     # now load the events
     events = EventsFromBAM(fast5dir,bamfile,reginfo,params)
 

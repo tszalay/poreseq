@@ -115,17 +115,37 @@ def assemble(args):
         
 def consensus(args):
 
+    # load the parameters file first
+    params = LoadParams(args.params)
+
     # open reference sequence and see how many there are
     # (if we gave a file with multiple sequences and no region string, generate one)
+    # and we should make sure to split the regions up, if they weren't directly given
     refs = SeqIO.index(args.ref, "fasta")
     if args.regions is None:
-        args.regions = list(refs.keys())
-
+        args.regions = []
+        for refid in refs:
+            # load the reference sequence
+            refseq = refs[refid]
+            # check if we need to take sub-slices
+            if 'max_length' in params and len(refseq) > params['max_length']:
+                dl = int(params['max_length']) - 1000
+                istart = 0
+                iend =int( params['max_length'])
+                # step through max_length-1000 at a time (leave nice overlap)
+                while istart < iend:
+                    args.regions.append('{}:{}:{}'.format(refid,istart,iend))
+                    iend = min(iend+dl,len(refseq))
+                    istart = min(istart+dl,len(refseq))
+            else:
+                # or just append the name directly
+                args.regions.append(refid)
+            
     # now loop through and refine sequences
     # (continue on errors)
     for region in args.regions:
         try:
-            seq = Mutate(args.ref,args.bam,args.dir,paramfile=args.params,region=region,
+            seq = Mutate(args.ref,args.bam,args.dir,params=params,region=region,
                          test=args.test,verbose=args.verbose)
         except Exception as e:
              sys.stderr.write('Skipping {}: {}\n'.format(region,str(e)))
