@@ -1,6 +1,6 @@
-#doFragmentCorrection = 0
+doFragmentCorrection = 0
 #assembleCoverage = 5
-assembleMinCoverage = 5
+assembleMinCoverage = 1
 
 # decrease mer size
 merSize=14
