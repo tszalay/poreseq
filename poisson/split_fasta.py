@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 import sys
 import os
 import random
@@ -56,7 +54,7 @@ def split_regions(fastafile, region_length, nfiles=None, perfile=None):
         # check if we need to take sub-slices
         dl = region_length - 1000
         istart = 0
-        iend = region_length
+        iend = min(region_length,len(refseq))
         # step through max_length-1000 at a time (leave nice overlap)
         while istart < iend:
             regions.append('{}:{}:{}'.format(refid,istart,iend))

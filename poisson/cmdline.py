@@ -3,6 +3,7 @@ from Util import *
 from ParamData import *
 from extract_fasta import extract_fasta
 from split_fasta import split_fasta, split_regions
+from merge_fasta import merge_fasta
 
 import string
 import argparse
@@ -21,7 +22,7 @@ def main():
     subparsers = parser.add_subparsers(help='Nanopore sequence consensus tool')
     
     # create assembly pipeline parser
-    parse_assm = subparsers.add_parser('assemble', help='run assembly pipeline')
+    '''parse_assm = subparsers.add_parser('assemble', help='run assembly pipeline')
     parse_assm.add_argument('output', help='output directory for files')
     parse_assm.add_argument('dirs', nargs='+', help='fast5 directories containing reads')
     parse_assm.add_argument('-p', '--params', default=None,
@@ -30,7 +31,7 @@ def main():
     parse_assm.add_argument('-w', '--write', action="store_true", default=False,
                         help='write commands only, do not run')
     parse_assm.set_defaults(func=assemble)
-    
+    '''
     # create consensus-calling parser
     parse_cons = subparsers.add_parser('consensus', help='run consensus algorithm using alignment')
     parse_cons.add_argument('ref', help='reference fasta file')
@@ -93,6 +94,12 @@ def main():
                         help='number of sequences per file')
     parse_split.set_defaults(func=split)
 
+    # short utility parsers: merge
+    parse_merge = subparsers.add_parser('merge', help='merge corrected fasta files')
+    parse_merge.add_argument('fasta', help='output fasta filename')
+    parse_merge.add_argument('files', nargs='+', help='fasta files to merge')
+    parse_merge.set_defaults(func=merge)
+
     # and extract
     parse_ext = subparsers.add_parser('extract', help='extract fasta from fast5')
     parse_ext.add_argument('dirs', help='fast5 directories', nargs='+')
@@ -154,6 +161,15 @@ def consensus(args):
     # load the parameters file first
     params = LoadParams(args.params)
 
+
+    # if we specified region files, load regions from there, directly, no modifications
+    if args.region_file is not None:
+        if args.regions is None:
+            args.regions = []
+        for rf in args.region_file:
+            if os.path.isfile(rf):
+                args.regions += [x.strip() for x in open(rf).readlines()]
+
     # open reference sequence and see how many there are
     # (if we gave a file with multiple sequences and no region string, generate one)
     # and we should make sure to split the regions up, if they weren't directly given
@@ -176,12 +192,6 @@ def consensus(args):
             else:
                 # or just append the name directly
                 args.regions.append(refid)
-
-    # if we specified region files, load regions from there, directly, no modifications
-    if args.region_file is not None:
-        for rf in args.region_file:
-            if os.path.isfile(rf):
-                args.regions += [x.strip() for x in open(rf).readlines()]
                 
     # now create output file for writing (or stdout)
     if args.output is None:
@@ -264,5 +274,6 @@ def split(args):
     else:
         split_regions(args.fasta,args.region_length,args.num_files,args.per_file)
 
+def merge(args):
 
-
+    merge_fasta(args.files,args.fasta)
