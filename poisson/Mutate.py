@@ -12,6 +12,10 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test
     reginfo = RegionInfo(region)
     refseq = str(LoadReference(fastafile,reginfo.name))
     
+    # test automatically sets verbose
+    if test:
+        verbose = 1
+    
     # set region indices to full fasta, if none specified
     if reginfo.start is None and reginfo.end is None:
         reginfo.start = 0
@@ -73,6 +77,7 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test
     if test:
         acc,inds = poisscpp.swalign(pa.sequence,refseq)
         errs = np.sum(np.array(inds)==0,0)
+        sys.stderr.write("Final accuracy: " + str(round(acc,1)) + "%\n")
         sys.stderr.write("Insertions: {}, Deletions: {}\n".format(errs[0],errs[1]))
         return (pa.sequence, acc)
     

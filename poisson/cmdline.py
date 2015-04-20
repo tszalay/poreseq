@@ -189,7 +189,7 @@ class trainhelper(object):
     def __init__(self, _args):
         self.args = _args
     def __call__(self, params):
-        Mutate(self.args.ref,self.args.bam,self.args.dir,params=params,region=self.args.region,
+        return Mutate(self.args.ref,self.args.bam,self.args.dir,params=params,region=self.args.region,
                test=True,verbose=False)
 
 def train(args):
