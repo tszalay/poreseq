@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+0;136;0c#! /usr/bin/env python
 
 import sys
 import os
@@ -19,7 +19,7 @@ def split_fasta(fastafile, nchunks=None, nseqs=None):
         chunks = []
         # open each file, write to them in parallel
         for i in range(nchunks):
-            chunks.append(open(fastabase + '.{}.fasta'.format(i),'w'))
+            chunks.append(open(fastabase + '.{}.fasta'.format(i+1),'w'))
         # now loop through the sequences
         for ref in refs:
             fileind = random.randint(0,nchunks-1)
@@ -33,7 +33,7 @@ def split_fasta(fastafile, nchunks=None, nseqs=None):
             # do we need to go on to the next file?
             if nwritten >= nseqs:
                 fileind += 1
-                f = open(fastabase + '.{}.fasta'.format(fileind),'w')
+                f = open(fastabase + '.{}.fasta'.format(fileind+1),'w')
                 nwritten = 0
             f.write(refs[ref].format('fasta'))
             nwritten += 1
