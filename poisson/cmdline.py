@@ -2,7 +2,7 @@ from Mutate import Mutate
 from Util import *
 from ParamData import *
 from extract_fasta import extract_fasta
-from split_fasta import split_fasta
+from split_fasta import split_fasta, split_regions
 
 import string
 import argparse
@@ -38,6 +38,8 @@ def main():
     parse_cons.add_argument('dir', help='root fast5 directory')
     parse_cons.add_argument('-r', '--regions', default=None, nargs='+',
                         help='regions to correct (eg. 1000:3000 or header_name:1000:3000)')
+    parse_cons.add_argument('-R', '--region-file', default=None, nargs='+',
+                        help='file(s) containing region strings, one per line')
     parse_cons.add_argument('-p', '--params', default=None,
                         help='parameter file to use')
     parse_cons.add_argument('-v', '--verbose', action="count", default=0,
@@ -82,6 +84,8 @@ def main():
     # short utility parsers: split
     parse_split = subparsers.add_parser('split', help='split fasta files into chunks')
     parse_split.add_argument('fasta', help='fasta file')
+    parse_split.add_argument('-R', '--region-length', type=int, default=None,
+                        help='output region strings split into this many bases')
     group = parse_split.add_mutually_exclusive_group(required=True)
     group.add_argument('-n', '--num-files', type=int, default=None,
                         help='number of files to split into')
@@ -172,6 +176,12 @@ def consensus(args):
             else:
                 # or just append the name directly
                 args.regions.append(refid)
+
+    # if we specified region files, load regions from there, directly, no modifications
+    if args.region_file is not None:
+        for rf in args.region_file:
+            if os.path.isfile(rf):
+                args.regions += [x.strip() for x in open(rf).readlines()]
                 
     # now create output file for writing (or stdout)
     if args.output is None:
@@ -225,12 +235,8 @@ def train(args):
     
     # and start the iterations
     for i in range(args.iter):
-        # first, generate modified parameter files and save them
+        # first, generate modified parameters
         paramlist = VaryParams(params)
-        #paramnames = ['train{}.conf'.format(j) for j in range(len(paramlist))]
-        
-        #for j,par in enumerate(paramlist):
-        #    SaveParams(paramnames[j],par)
         
         # use a python multiprocess pool to run mutation on all of them
         pool = Pool(processes=args.threads)
@@ -241,6 +247,8 @@ def train(args):
         params = paramlist[np.argmax(accs)]
         # and intermittently save it
         SaveParams('train_best.conf',params)
+        # and output to stderr with an update
+        sys.stderr.write('Best at iter {}: {}\n'.format(i+1,max(accs)))
 
 def extract(args):
     
@@ -251,4 +259,10 @@ def extract(args):
 
     
 def split(args):
-    split_fasta(args.fasta,args.num_files,args.per_file)
+    if args.region_length is None:
+        split_fasta(args.fasta,args.num_files,args.per_file)
+    else:
+        split_regions(args.fasta,args.region_length,args.num_files,args.per_file)
+
+
+

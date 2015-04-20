@@ -1,6 +1,6 @@
 doFragmentCorrection = 0
 #assembleCoverage = 5
-assembleMinCoverage = 1
+assembleMinCoverage = 2
 
 # decrease mer size
 merSize=14
@@ -18,5 +18,5 @@ asmOBT=0
 batOptions=-RS -CS
 utgGraphErrorRate = 0.4
 utgMergeErrorRate = 0.4
-utgErrorRate=0.2
-asmObtErrorRate = 0.4
+#utgErrorRate=0.2
+#asmObtErrorRate = 0.4
