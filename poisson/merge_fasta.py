@@ -19,7 +19,7 @@ def merge_seqs(seq1, seq2, overlap):
     if acc < 0.70:
         raise Exception('Insufficient accuracy for overlap')
     # now put the break point halfway between
-    inds = [x in inds if x[0]>0 and x[1]>0]
+    inds = [x for x in inds if x[0]>0 and x[1]>0]
     imid = inds[int(len(inds)/2)]
     i0 += imid[0]
     i1 = imid[1]
