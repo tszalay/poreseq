@@ -12,6 +12,7 @@ import stat
 import glob
 
 from multiprocessing import Pool
+from Bio import SeqIO
 
 def main():
 
