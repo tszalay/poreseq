@@ -11,6 +11,7 @@ import os
 import stat
 import glob
 
+import numpy as np
 from multiprocessing import Pool
 from Bio import SeqIO
 
