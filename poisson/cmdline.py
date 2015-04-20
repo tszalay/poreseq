@@ -1,12 +1,15 @@
-from Mutate import *
+from Mutate import Mutate
 from Util import *
 from ParamData import *
+from extract_fasta import extract_fasta
+from split_fasta import split_fasta
 
 import string
 import argparse
 import sys
 import os
 import stat
+import glob
 
 from multiprocessing import Pool
 
@@ -58,7 +61,7 @@ def main():
                         help='output verbosity (0-2)')
     parse_var.set_defaults(func=variant)
                         
-    # and finally the training parser
+    # and the training parser
     parse_train = subparsers.add_parser('train', help='train help')
     parse_train.add_argument('ref', help='reference fasta file')
     parse_train.add_argument('bam', help='input BAM file')
@@ -73,6 +76,27 @@ def main():
     parse_train.add_argument('-r', '--region', default=None, 
                         help='region to train on (eg. 1000:3000 or header_name:1000:3000)')
     parse_train.set_defaults(func=train)
+    
+    # short utility parsers: split
+    parse_split = subparsers.add_parser('split', help='split help')
+    parse_split.add_argument('fasta', help='fasta file')
+    group = parse_split.add_mutually_exclusive_group(required=True)
+    group.add_argument('-n', '--num-files', type=int, default=None,
+                        help='number of files to split into')
+    group.add_argument('-m', '--per-file', type=int, default=None,
+                        help='number of sequences per file')
+    parse_split.set_defaults(func=split)
+
+    # and extract
+    parse_ext = subparsers.add_parser('extract', help='extract')
+    parse_ext.add_argument('dirs', help='fast5 directories', nargs='+')
+    parse_ext.add_argument('fasta', help='output fasta')
+    parse_ext.add_argument('-p', '--path', action="store_true", default=False,
+                            help='use rel. path as fasta header (instead of just filename)')
+
+    parse_ext.set_defaults(func=extract)
+
+
     
     args = parser.parse_args()
     args.func(args)
@@ -215,3 +239,14 @@ def train(args):
         params = paramlist[np.argmax(accs)]
         # and intermittently save it
         SaveParams('train_best.conf',params)
+
+def extract(args):
+    
+    fast5files = []
+    for d in args.dirs:
+        fast5files += glob.glob(os.path.join(d,'*.fast5'))
+    extract_fasta(fast5files,args.fasta,args.path,False)
+
+    
+def split(args):
+    split_fasta(args.fasta,args.num_files,args.per_file)

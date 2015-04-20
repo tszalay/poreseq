@@ -2,7 +2,6 @@
 
 import sys
 import os
-import glob
 import h5py
 
 def get_fasta(filename):
@@ -33,8 +32,8 @@ def extract_fasta(fast5files, fastafile=None, addpath=False, force=False):
     
     # check if the file exists
     if os.path.isfile(fastafile) and not force:
-        if raw_input('File ' + fastafile + ' exists, overwrite? (y/n): ') != 'y':
-            return
+        sys.stderr.write('File exists, skipping...\n')
+        return
         
     fasta = open(fastafile,'w') 
     
@@ -59,33 +58,3 @@ def extract_fasta(fast5files, fastafile=None, addpath=False, force=False):
     print '\rDone, extracted '+ str(nwrote) + ' 2D fasta sequences'
     
     fasta.close()
-
-
-def run():
-    
-    fast5files = []
-    fastafile = None
-    addpath = False
-    force = False
-    
-    if len(sys.argv) < 2:
-        print "usage: poissextract [-p] fast5-dir/files [fasta file]"
-        print "    (-p option includes fast5 path in fasta header names)"
-        print "\nexample: extract_fasta.py data/run_23/*.fast5 out.fasta"
-        sys.exit()
-        
-    for arg in sys.argv[1:]:
-        if arg == '-p':
-            addpath = True
-        elif arg == '-f':
-            force = True
-        elif arg.find('.fast5') > 0 and os.path.isfile(arg):
-            fast5files.append(arg)
-        elif arg.find('.fa')>0 or arg.find('.fasta')>0:
-            fastafile = arg
-        elif os.path.isdir(arg):
-            # glob the fast5 files
-            fast5dir = os.path.join(arg,'*.fast5')
-            fast5files += glob.glob(fast5dir)
-        
-    extract_fasta(fast5files,fastafile,addpath,force)
