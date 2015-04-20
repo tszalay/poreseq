@@ -16,10 +16,10 @@ from multiprocessing import Pool
 def main():
 
     parser = argparse.ArgumentParser(prog='poisson')
-    subparsers = parser.add_subparsers(help='sub-command help')
+    subparsers = parser.add_subparsers(help='Nanopore sequence consensus tool')
     
     # create assembly pipeline parser
-    parse_assm = subparsers.add_parser('assemble', help='assemble help')
+    parse_assm = subparsers.add_parser('assemble', help='run assembly pipeline')
     parse_assm.add_argument('output', help='output directory for files')
     parse_assm.add_argument('dirs', nargs='+', help='fast5 directories containing reads')
     parse_assm.add_argument('-p', '--params', default=None,
@@ -30,7 +30,7 @@ def main():
     parse_assm.set_defaults(func=assemble)
     
     # create consensus-calling parser
-    parse_cons = subparsers.add_parser('consensus', help='consensus help')
+    parse_cons = subparsers.add_parser('consensus', help='run consensus algorithm using alignment')
     parse_cons.add_argument('ref', help='reference fasta file')
     parse_cons.add_argument('bam', help='input BAM file')
     parse_cons.add_argument('dir', help='root fast5 directory')
@@ -47,7 +47,7 @@ def main():
     parse_cons.set_defaults(func=consensus)
     
     # and the variant-calling parser
-    parse_var = subparsers.add_parser('variant', help='variant help')
+    parse_var = subparsers.add_parser('variant', help='call sequence variants')
     parse_var.add_argument('ref', help='reference fasta file')
     parse_var.add_argument('bam', help='input BAM file')
     parse_var.add_argument('dir', help='root fast5 directory')
@@ -62,7 +62,7 @@ def main():
     parse_var.set_defaults(func=variant)
                         
     # and the training parser
-    parse_train = subparsers.add_parser('train', help='train help')
+    parse_train = subparsers.add_parser('train', help='train model parameters on data')
     parse_train.add_argument('ref', help='reference fasta file')
     parse_train.add_argument('bam', help='input BAM file')
     parse_train.add_argument('dir', help='root fast5 directory')
@@ -78,7 +78,7 @@ def main():
     parse_train.set_defaults(func=train)
     
     # short utility parsers: split
-    parse_split = subparsers.add_parser('split', help='split help')
+    parse_split = subparsers.add_parser('split', help='split fasta files into chunks')
     parse_split.add_argument('fasta', help='fasta file')
     group = parse_split.add_mutually_exclusive_group(required=True)
     group.add_argument('-n', '--num-files', type=int, default=None,
@@ -88,7 +88,7 @@ def main():
     parse_split.set_defaults(func=split)
 
     # and extract
-    parse_ext = subparsers.add_parser('extract', help='extract')
+    parse_ext = subparsers.add_parser('extract', help='extract fasta from fast5')
     parse_ext.add_argument('dirs', help='fast5 directories', nargs='+')
     parse_ext.add_argument('fasta', help='output fasta')
     parse_ext.add_argument('-p', '--path', action="store_true", default=False,
