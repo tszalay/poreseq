@@ -3,15 +3,16 @@ import os
 from Bio import SeqIO
 from Util import RegionInfo
 from poisscpp import swalign
+import pdb
 
 def merge_seqs(seq1, seq2, overlap):
     
-    # assumes the last 1000 bases of seq1 and the first 1000 bases of seq2 overlap
-    i0 = -1000
-    i1 = 1000
-    if len(seq1) < 1000:
+    # assumes the last "overlap" bases of seq1 and the first "overlap" bases of seq2 overlap
+    i0 = -overlap
+    i1 = overlap
+    if len(seq1) < overlap:
         i0 = 0
-    if len(seq2) < 1000:
+    if len(seq2) < overlap:
         i1 = len(seq2)-1
 
     acc,inds = swalign(seq1[i0:],seq2[:i1])
@@ -39,9 +40,9 @@ def merge_fasta(fastafiles, fastaout):
             # so let's parse it
             reg = RegionInfo(ref)
             # and put all corresponding pieces in a list, along with the sequence
-            if reg.name not in headers:
+            if reg.name not in fragments:
                 fragments[reg.name] = []
-            fragments[reg.name].append((reg,str(refs[ref])))
+            fragments[reg.name].append((reg,str(refs[ref].seq)))
 
     # now fragments contains hopefully all the pieces, let's put them together
     # one sequence at a time
@@ -53,7 +54,7 @@ def merge_fasta(fastafiles, fastaout):
         # first, sort the list in order of start index
         seqlist.sort(key=lambda x: x[0].start)
         # and now reduce down to a single sequence
-        seq = reduce(merge_seqs, [x[1] for x in seqlist])
+        seq = reduce(lambda x,y: merge_seqs(x,y,1000), [x[1] for x in seqlist])
         outfile.write('>{}\n{}\n'.format(ref,seq))
 
     

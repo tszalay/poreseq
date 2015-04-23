@@ -96,8 +96,8 @@ def main():
 
     # short utility parsers: merge
     parse_merge = subparsers.add_parser('merge', help='merge corrected fasta files')
-    parse_merge.add_argument('fasta', help='output fasta filename')
-    parse_merge.add_argument('files', nargs='+', help='fasta files to merge')
+    parse_merge.add_argument('fasta_out', help='output fasta filename')
+    parse_merge.add_argument('fasta_in', nargs='+', help='fasta files to merge')
     parse_merge.set_defaults(func=merge)
 
     # and extract
@@ -276,4 +276,4 @@ def split(args):
 
 def merge(args):
 
-    merge_fasta(args.files,args.fasta)
+    merge_fasta(args.fasta_in,args.fasta_out)
