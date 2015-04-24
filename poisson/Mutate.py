@@ -30,6 +30,16 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test
     #pdb.set_trace()
     refseq = refseq[reginfo.start:reginfo.end]
 
+    # we know our algorithm doesn't do great for 1 or 2 events
+    # in which case we can just shortcut and return the starting seq
+    if len(events) < 5:
+        if verbose > 0:
+            sys.stderr.write("Coverage is 1 or 2, not mutating...\n")
+        if test:
+            return (100, refseq)
+        else:
+            return refseq
+
     if verbose > 0:
         sys.stderr.write("Mutating {} bases using {} events\n".format(len(refseq),len(events)))
 

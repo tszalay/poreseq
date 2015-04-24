@@ -6,6 +6,6 @@ if [ $# -lt 1 ]; then
 fi
 
 # first, convert fasta file to fastq with blank qual
-java -jar ~/GitHub/poisson/scripts/convertFastaAndQualToFastq.jar $1 > $1.fastq
+java -jar ~/github/poisson/scripts/convertFastaAndQualToFastq.jar $1 > $1.fastq
 # next, call celera with custom spec file, passing through rest of arguments
-PBcR -length 500 -l assembly -s ~/GitHub/poisson/scripts/oxford.spec -fastq $1.fastq  "${@:2}"
+PBcR -length 500 -l assembly -s ~/github/poisson/scripts/oxford.spec -fastq $1.fastq  "${@:2}"
