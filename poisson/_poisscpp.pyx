@@ -151,6 +151,12 @@ def swalign(seq1,seq2):
         pairs.append((align.inds1[i],align.inds2[i]))
     return (align.accuracy, pairs)
 
+class MutationScore:
+    def __init__(self):
+        self.start = 0
+        self.orig = ""
+        self.mut = ""
+        self.score = 0
 
 class PoissAlign:
     def __init__(self):
@@ -170,7 +176,46 @@ class PoissAlign:
             cov[minind:maxind] += 1
             
         return cov
-
+        
+    def RealignTo(self, newseq):
+        # calculate the alignments
+        align = swalign(self.sequence, newseq)
+        if align[0] < 0.6:
+            raise Exception('Error rate too large for realignment!')
+        # now actually map the alignments
+        [x.mapaligns(align[1]) for x in self.events]
+        # and set the sequence
+        self.sequence = newseq
+        
+    def ScoreEvents(self):
+    
+        # calculate likelihoods over all of the strands
+        cdef AlignData data = PythonToAlignData(self)
+        # and get the scores, without the aligned likelihoods
+        cdef vector[double] scores = ScoreAlignments(data,NULL)
+        return scores
+        
+    def ScorePoints(self):
+        
+        # get the score of all single-base mutations
+        cdef AlignData data = PythonToAlignData(self)
+        # override scoring width with point mutation width if available
+        if 'point_width' in self.params:
+            data.params.scoring_width = self.params['point_width']
+            
+        cdef vector[MutInfo] mutations = FindPointMutations(data)
+        cdef vector[MutScore] scores = ScoreMutations(data,mutations)
+        
+        pyscores = []
+        for i in range(scores.size()):
+            s = MutationScore()
+            s.start = scores[i].start
+            s.orig = scores[i].orig
+            s.mut = scores[i].mut
+            s.score = scores[i].score
+            pyscores.append(s)
+        
+        return pyscores
         
     def Mutate(self,seqs='self',reps=4):
         cdef AlignData data = PythonToAlignData(self)

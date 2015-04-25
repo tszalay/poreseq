@@ -1,38 +1,25 @@
 import numpy as np
-from LoadData import *
-from ParamData import *
-from Util import *
-from poisson import poisscpp
-from poisscpp import PoissAlign
+from LoadData import LoadAlignedEvents
+from Util import RegionInfo
+import poisscpp
 import pdb
 import sys
 
 def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test=False):
 
-    reginfo = RegionInfo(region)
-    refseq = str(LoadReference(fastafile,reginfo.name))
+    pa = LoadAlignedEvents(fastafile,bamfile,fast5dir,RegionInfo(region),params)
+    pa.params['verbose'] = verbose
+    
+    # and the loaded reference sequence
+    refseq = pa.sequence
     
     # test automatically sets verbose
     if test:
         verbose = 1
     
-    # set region indices to full fasta, if none specified
-    if reginfo.start is None and reginfo.end is None:
-        reginfo.start = 0
-        reginfo.end = len(refseq)-1
-        
-    # now load the events
-    events = EventsFromBAM(fast5dir,bamfile,reginfo,params)
-
-    if len(params) > 0:
-        [x.setparams(params) for x in events]
-    
-    #pdb.set_trace()
-    refseq = refseq[reginfo.start:reginfo.end]
-
     # we know our algorithm doesn't do great for 1 or 2 events
     # in which case we can just shortcut and return the starting seq
-    if len(events) < 5:
+    if len(pa.events) < 5:
         if verbose > 0:
             sys.stderr.write("Coverage is 1 or 2, not mutating...\n")
         if test:
@@ -41,22 +28,16 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test
             return refseq
 
     if verbose > 0:
-        sys.stderr.write("Mutating {} bases using {} events\n".format(len(refseq),len(events)))
+        sys.stderr.write("Mutating {} bases using {} events\n".format(len(refseq),len(pa.events)))
 
+    # if test mode, pick a sequence from event sequences
     if test:
         seq = ""
-        for ev in events:
+        for ev in pa.events:
             pairs = poisscpp.swalign(ev.sequence,refseq)[1]
             if pairs[-1][1]-pairs[0][1] > len(seq):
                 seq = ev.sequence[pairs[0][0]:pairs[-1][0]]
-    else:
-        seq = refseq
-        
-    pa = PoissAlign()
-    pa.sequence = seq
-    pa.events = events
-    pa.params = params
-    pa.params['verbose'] = verbose
+        pa.sequence = seq
 
     if test:
         sys.stderr.write("Starting accuracy: " + str(round(poisscpp.swalign(pa.sequence,refseq)[0],1)) + "%\n")

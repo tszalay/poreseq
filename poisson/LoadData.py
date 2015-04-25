@@ -5,6 +5,35 @@ import numpy as np
 from Bio import SeqIO
 
 from EventData import PoissEvent
+from poisson import poisscpp
+
+def LoadAlignedEvents(fastafile, bamfile, eventdir, reginfo, params):
+
+    # load the reference sequence    
+    refseq = str(LoadReference(fastafile,reginfo.name))    
+    # set region indices to full fasta, if none specified
+    if reginfo.start is None and reginfo.end is None:
+        reginfo.start = 0
+        reginfo.end = len(refseq)-1        
+    # now load the events
+    events = EventsFromBAM(eventdir,bamfile,reginfo,params)
+
+    # set the parameters for the loaded events
+    if len(params) > 0:
+        [x.setparams(params) for x in events]
+    
+    # take specified region of refseq
+    refseq = refseq[reginfo.start:reginfo.end]
+    
+    # create poissalign object with loaded settings
+    pa = poisscpp.PoissAlign()
+    pa.sequence = refseq
+    pa.events = events
+    pa.params = params
+    
+    return pa
+
+
 
 def LoadReference(fastafile, refname=None):
     refs = SeqIO.index(fastafile, "fasta")
