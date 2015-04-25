@@ -183,7 +183,7 @@ class PoissAlign:
         if align[0] < 0.6:
             raise Exception('Error rate too large for realignment!')
         # now actually map the alignments
-        [x.mapaligns(align[1]) for x in self.events]
+        [x.mapaligns(np.array(align[1])) for x in self.events]
         # and set the sequence
         self.sequence = newseq
         

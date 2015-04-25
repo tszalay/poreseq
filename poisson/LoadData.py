@@ -14,7 +14,7 @@ def LoadAlignedEvents(fastafile, bamfile, eventdir, reginfo, params):
     # set region indices to full fasta, if none specified
     if reginfo.start is None and reginfo.end is None:
         reginfo.start = 0
-        reginfo.end = len(refseq)-1        
+        reginfo.end = len(refseq)       
     # now load the events
     events = EventsFromBAM(eventdir,bamfile,reginfo,params)
 
