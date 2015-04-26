@@ -217,6 +217,26 @@ class PoissAlign:
         
         return pyscores
         
+    def ApplyMuts(self, pymuts):
+        # get the score of all single-base mutations
+        cdef AlignData data = PythonToAlignData(self)
+        if 'point_width' in self.params:
+            data.params.scoring_width = self.params['point_width']
+            
+        cdef vector[MutScore] scores
+        cdef MutScore ms
+        for m in pymuts:
+            ms.start = m.start
+            ms.orig = m.orig
+            ms.mut = m.mut
+            ms.score = m.score
+            scores.push_back(ms)
+            
+        MakeMutations(data,scores)
+        self.sequence = data.sequence.bases
+        self.events = UpdatePythonEvents(self.events, data)
+        
+        
     def Mutate(self,seqs='self',reps=4):
         cdef AlignData data = PythonToAlignData(self)
         

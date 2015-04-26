@@ -85,6 +85,9 @@ struct MutScore : MutInfo
     // mutations, which are typically ~+-1e-12    
     MutScore(const MutInfo& mut) : MutInfo(mut), score(-1e-6)
     {}
+
+    MutScore() : MutInfo(), score(-1e-6)
+{}
 };
 
 #endif
