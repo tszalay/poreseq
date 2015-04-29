@@ -21,17 +21,6 @@ def main():
     parser = argparse.ArgumentParser(prog='poisson')
     subparsers = parser.add_subparsers(help='Nanopore sequence consensus tool')
     
-    # create assembly pipeline parser
-    '''parse_assm = subparsers.add_parser('assemble', help='run assembly pipeline')
-    parse_assm.add_argument('output', help='output directory for files')
-    parse_assm.add_argument('dirs', nargs='+', help='fast5 directories containing reads')
-    parse_assm.add_argument('-p', '--params', default=None,
-                        help='parameter file to use')
-    parse_assm.add_argument('-n', '--threads', type=int, default=1)
-    parse_assm.add_argument('-w', '--write', action="store_true", default=False,
-                        help='write commands only, do not run')
-    parse_assm.set_defaults(func=assemble)
-    '''
     # create consensus-calling parser
     parse_cons = subparsers.add_parser('consensus', help='run consensus algorithm using alignment')
     parse_cons.add_argument('ref', help='reference fasta file')
@@ -56,7 +45,7 @@ def main():
     parse_var.add_argument('ref', help='reference fasta file')
     parse_var.add_argument('bam', help='input BAM file')
     parse_var.add_argument('dir', help='root fast5 directory')
-    parse_var.add_argument('vars', help='variant sequences to test')
+    parse_var.add_argument('vars', help='fasta of variant sequences to test')
     
     parse_var.add_argument('-r', '--regions', default=None, nargs='+',
                         help='regions to correct (eg. 1000:3000 or header_name:1000:3000)')
@@ -113,47 +102,6 @@ def main():
     
     args = parser.parse_args()
     args.func(args)
-    
-
-def assemble(args):
-
-    # start by creating directory to hold all of the generated files
-    if not os.path.isdir(args.output):
-        os.mkdir(args.output)
-    
-    commands = ''
-
-    # first step: extract and split fasta files
-    commands += 'poissextract -p ' + string.join(args.dirs) + ' ' + os.path.join(args.output,'reads.fasta') + '\n'
-    commands += 'poisssplit ' + os.path.join(args.output,'reads.fasta') + ' ' + str(args.threads) + '\n'
-    
-    # second step: align fasta files -> bams
-    commands += ('ls ' + os.path.join(args.output,'reads.*.fasta') + ' | ' +
-                    'parallel -P ' + str(args.threads) + ' poissalign {1} ' + 
-                    os.path.join(args.output,'reads.fasta') + ' {1}\n')
-                    
-    paramstr = ''
-    if args.params is not None:
-        paramstr = '-p ' + args.params
-
-    # third step: refine reads using poisson
-    commands += ('ls ' + os.path.join(args.output,'reads.*.fasta') + ' | ' +
-                    'parallel -P ' + str(args.threads) + ' poisson consensus {1} {1}.bam ' + 
-                    ' . -v ' + paramstr + '\n')
-    
-    # last step: assemble reads using celera (or other assembler)
-    commands += 'poissemble ' + os.path.join(args.output,'corrected.fasta') + '\n'
-    
-    # save to output dir
-    runscript = os.path.join(args.output,'run.sh')
-    with open(runscript,'w') as f:
-        f.write(commands)
-    st = os.stat(runscript)
-    os.chmod(runscript, st.st_mode | stat.S_IEXEC)
-        
-    # and run, if requested
-    if not args.write:
-        os.system(runscript)
         
         
 def consensus(args):

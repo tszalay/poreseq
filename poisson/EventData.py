@@ -126,7 +126,7 @@ class PoissEvent():
             
     def mapaligns(self, pairs):
         # re-map ref_aligns using provided pairs
-        # first index is to own sequence, second is to ref
+        # first index is to current (ref_align) sequence, second is to new ref
         # (should be numpy array)
 
         # clear ref_align
