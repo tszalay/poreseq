@@ -13,7 +13,7 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test
     refseq = str(LoadReference(fastafile,reginfo.name))
     
     # test automatically sets verbose
-    if test:
+    if test and verbose == 0:
         verbose = 1
     
     # set region indices to full fasta, if none specified
