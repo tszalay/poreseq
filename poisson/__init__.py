@@ -1,5 +1,5 @@
 from LoadData import LoadAlignedEvents
-from ParamData import *
-from Mutate import *
-from Variant import *
+from ParamData import LoadParams, SaveParams
+from Mutate import Mutate
+from Variant import Variant
 from cmdline import main

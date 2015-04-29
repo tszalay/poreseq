@@ -1,4 +1,5 @@
 from Mutate import Mutate
+from Variant import Variant
 from Util import *
 from ParamData import *
 from extract_fasta import extract_fasta
@@ -11,6 +12,7 @@ import sys
 import os
 import stat
 import glob
+import pdb
 
 import numpy as np
 from multiprocessing import Pool
@@ -49,6 +51,8 @@ def main():
     
     parse_var.add_argument('-r', '--regions', default=None, nargs='+',
                         help='regions to correct (eg. 1000:3000 or header_name:1000:3000)')
+    parse_var.add_argument('-R', '--region-file', default=None, nargs='+',
+                        help='file(s) containing region strings, one per line')
     parse_var.add_argument('-p', '--params', default=None,
                         help='parameter file to use')
     parse_var.add_argument('-v', '--verbose', action="count", default=0,
@@ -174,8 +178,30 @@ def consensus(args):
 
         
 def variant(args):
-    pdb.set_trace()
-    pass
+
+    # load the parameters file first
+    params = LoadParams(args.params)
+
+    # if we specified region files, load regions from there, directly, no modifications
+    if args.region_file is not None:
+        if args.regions is None:
+            args.regions = []
+        for rf in args.region_file:
+            if os.path.isfile(rf):
+                args.regions += [x.strip() for x in open(rf).readlines()]
+
+    # open reference sequence and see how many there are, should only be one if
+    # not directly specified
+    refs = SeqIO.index(args.ref, "fasta")
+    if args.regions is None and len(refs) > 1:
+        raise Exception('Ambiguous reference for variant calling')
+
+    if args.regions is None and len(refs) == 1:
+        args.regions = refs.keys()
+
+    # now just do variant calling for each region
+    for region in args.regions:
+        Variant(args.ref, args.bam, args.dir, args.vars, region, params, args.verbose)
     
 
 # nice trick from stackoverflow to allow function pickling
