@@ -68,6 +68,7 @@ class PoissEvent():
         self.mean = self.mean - drift*(self.start - self.start[0])
         self.ref_align = 0*self.mean
         self.ref_like = 0*self.stdv
+        self.flipped = False
         
         # now seed ref_aligns to the self-alignment
         # first, take everything from 'alignment' that is aligned
@@ -123,6 +124,8 @@ class PoissEvent():
             self.ref_align[ra0] = len(self.sequence) - self.ref_align[ra0]
             
         self.makecontiguous()
+        
+        self.flipped = not self.flipped
             
     def mapaligns(self, pairs):
         # re-map ref_aligns using provided pairs
