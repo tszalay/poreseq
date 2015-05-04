@@ -28,16 +28,17 @@ def main():
     parse_cons.add_argument('ref', help='reference fasta file')
     parse_cons.add_argument('bam', help='input BAM file')
     parse_cons.add_argument('dir', help='root fast5 directory')
-    parse_cons.add_argument('-r', '--regions', default=None, nargs='+',
-                        help='regions to correct (eg. 1000:3000 or header_name:1000:3000)')
-    parse_cons.add_argument('-R', '--region-file', default=None, nargs='+',
-                        help='file(s) containing region strings, one per line')
+    group = parse_cons.add_mutually_exclusive_group(required=False)
+    group.add_argument('-r', '--region', default=None,
+                        help='region to correct (eg. 1000:3000 or header_name:1000:3000)')
+    group.add_argument('-R', '--region-file', default=None,
+                        help='file containing region strings, one per line')
     parse_cons.add_argument('-p', '--params', default=None,
                         help='parameter file to use')
     parse_cons.add_argument('-v', '--verbose', action="count", default=0,
                         help='output verbosity (0-2)')
-    parse_cons.add_argument('-o', '--output', default=None,
-                        help='output fasta file ("-" for stdout)')
+    parse_cons.add_argument('-o', '--output', default=sys.stdout,
+                        help='output fasta file')
     parse_cons.add_argument('-T', '--test', action="store_true", default=False,
                         help='test mode: seed with loaded sequence, output score as well')
     parse_cons.set_defaults(func=consensus)
@@ -47,12 +48,19 @@ def main():
     parse_var.add_argument('ref', help='reference fasta file')
     parse_var.add_argument('bam', help='input BAM file')
     parse_var.add_argument('dir', help='root fast5 directory')
-    parse_var.add_argument('vars', help='fasta of variant sequences to test')
     
-    parse_var.add_argument('-r', '--regions', default=None, nargs='+',
-                        help='regions to correct (eg. 1000:3000 or header_name:1000:3000)')
-    parse_var.add_argument('-R', '--region-file', default=None, nargs='+',
-                        help='file(s) containing region strings, one per line')
+    group = parse_var.add_mutually_exclusive_group(required=True)
+    group.add_argument('-f', '--fasta', default=None, 
+                        help='fasta of variant sequences to test')
+    group.add_argument('-m', '--mut-file', default=None, 
+                        help='file with mutations to test')
+    
+    group = parse_var.add_mutually_exclusive_group(required=False)
+    group.add_argument('-r', '--region', default=None,
+                        help='region to correct (eg. 1000:3000 or header_name:1000:3000)')
+    group.add_argument('-R', '--region-file', default=None,
+                        help='file containing region strings, one per line')
+
     parse_var.add_argument('-p', '--params', default=None,
                         help='parameter file to use')
     parse_var.add_argument('-v', '--verbose', action="count", default=0,
@@ -106,59 +114,49 @@ def main():
     
     args = parser.parse_args()
     args.func(args)
-        
+
+
+def parse_regions(args):
+    regions = []
+    
+    # if we specified region files, load regions from there, directly, no modifications
+    if args.region_file is not None:
+        if os.path.isfile(args.region_file):
+            regions += [x.strip() for x in open(args.region_file).readlines()]
+            
+    # if we specified a region with positions directly, just use that
+    reginfo = RegionInfo(args.region)
+    if reginfo.start is not None:
+        regions.append(args.region)
+
+    # now only split if none specified from file and if args.region does not contain # info
+    if regions == []:
+        # make sure to split the regions up
+        if 'max_length' in args.params:
+            # split the regions if max length specified
+            regions = split_regions(args.ref, args.params['max_length'], userefs=args.region)
+        else:
+            # or use 10kb by default
+            regions = split_regions(args.ref, 10000, userefs=args.region)
+            
+    return regions
         
 def consensus(args):
 
     # load the parameters file first
-    params = LoadParams(args.params)
+    args.params = LoadParams(args.params)
+    # split up the regions as necessary
+    regions = parse_regions(args)
 
-
-    # if we specified region files, load regions from there, directly, no modifications
-    if args.region_file is not None:
-        if args.regions is None:
-            args.regions = []
-        for rf in args.region_file:
-            if os.path.isfile(rf):
-                args.regions += [x.strip() for x in open(rf).readlines()]
-
-    # open reference sequence and see how many there are
-    # (if we gave a file with multiple sequences and no region string, generate one)
-    # and we should make sure to split the regions up, if they weren't directly given
-    refs = SeqIO.index(args.ref, "fasta")
-    if args.regions is None:
-        args.regions = []
-        for refid in refs:
-            # load the reference sequence
-            refseq = refs[refid]
-            # check if we need to take sub-slices
-            if 'max_length' in params and len(refseq) > params['max_length']:
-                dl = int(params['max_length']) - 1000
-                istart = 0
-                iend =int( params['max_length'])
-                # step through max_length-1000 at a time (leave nice overlap)
-                while istart < iend:
-                    args.regions.append('{}:{}:{}'.format(refid,istart,iend))
-                    iend = min(iend+dl,len(refseq))
-                    istart = min(istart+dl,len(refseq))
-            else:
-                # or just append the name directly
-                args.regions.append(refid)
-                
     # now create output file for writing (or stdout)
-    if args.output is None:
-        fastabase = os.path.splitext(args.ref)[0]
-        outfile = open(fastabase+'.corr.fasta','w')
-    elif args.output == '-':
-        outfile = sys.stdout
-    else:
-        outfile = open(args.output,'w')
+    if args.output != sys.stdout:
+        args.output = open(args.output,'w')
             
     # now loop through and refine sequences
     # (continue on errors)
-    for region in args.regions:
+    for region in regions:
         try:
-            seq = Mutate(args.ref,args.bam,args.dir,params=params,region=region,
+            seq = Mutate(args.ref,args.bam,args.dir,params=args.params,region=region,
                          test=args.test,verbose=args.verbose)
         except Exception as e:
              sys.stderr.write('Skipping {}: {}\n'.format(region,str(e)))
@@ -172,36 +170,44 @@ def consensus(args):
         if args.test:
             region += ' [' + str(round(acc,2)) + ']'
             
-        outfile.write('>{}\n{}\n'.format(region,seq))
-        outfile.flush()
+        args.output.write('>{}\n{}\n'.format(region,seq))
+        args.output.flush()
         
 
         
 def variant(args):
 
     # load the parameters file first
-    params = LoadParams(args.params)
-
-    # if we specified region files, load regions from there, directly, no modifications
-    if args.region_file is not None:
-        if args.regions is None:
-            args.regions = []
-        for rf in args.region_file:
-            if os.path.isfile(rf):
-                args.regions += [x.strip() for x in open(rf).readlines()]
-
-    # open reference sequence and see how many there are, should only be one if
-    # not directly specified
-    refs = SeqIO.index(args.ref, "fasta")
-    if args.regions is None and len(refs) > 1:
-        raise Exception('Ambiguous reference for variant calling')
-
-    if args.regions is None and len(refs) == 1:
-        args.regions = refs.keys()
-
-    # now just do variant calling for each region
-    for region in args.regions:
-        Variant(args.ref, args.bam, args.dir, args.vars, region, params, args.verbose)
+    args.params = LoadParams(args.params)
+    # split up the regions as necessary
+    regions = parse_regions(args)
+    
+    # read in all of the mutations specified in mut_file
+    muts = []
+    if args.mut_file is not None:
+        lines = open(args.mut_file).readlines()
+        for l in lines:
+            mi = MutationInfo(l)
+            if mi.start < 0:
+                continue
+            muts.append(mi)
+    
+    if 'end_trim' not in args.params:
+        args.params['end_trim'] = 0
+    # loop through each region and run
+    for region in regions:
+        reginfo = RegionInfo(region)
+        # get subset of mutations
+        curmuts = [x for x in muts if x.start < reginfo.end - args.params['end_trim']]
+        muts = [x for x in muts if x.start >= reginfo.end - args.params['end_trim']]
+        if curmuts == []:
+            continue
+        
+        try:
+            Variant(args.ref, args.bam, args.dir, args.fasta, curmuts, region, args.params, args.verbose)
+        except Exception as e:
+             sys.stderr.write('Skipping {}: {}\n'.format(region,str(e)))
+             continue
     
 
 # nice trick from stackoverflow to allow function pickling

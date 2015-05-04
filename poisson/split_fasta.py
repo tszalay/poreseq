@@ -37,18 +37,17 @@ def split_fasta(fastafile, nchunks=None, nseqs=None):
             nwritten += 1
 
 
-def split_regions(fastafile, region_length, nfiles=None, perfile=None):
+def split_regions(fastafile, region_length, nfiles=None, perfile=None, userefs=None):
 
     refs = SeqIO.index(fastafile, "fasta")
     
-    if nfiles is None and perfile is None:
-        return
-
-    fastabase = os.path.splitext(fastafile)[0]
-
+    region_length = int(region_length)
     # now generate list of region strings
     regions = []
     for refid in refs:
+        # if sub-refs to use specified and not there, skip
+        if userefs is not None and refid not in userefs:
+            continue
         # load the reference sequence
         refseq = refs[refid]
         # check if we need to take sub-slices
@@ -60,6 +59,13 @@ def split_regions(fastafile, region_length, nfiles=None, perfile=None):
             regions.append('{}:{}:{}'.format(refid,istart,iend))
             iend = min(iend+dl,len(refseq))
             istart = min(istart+dl,len(refseq))
+    
+    # if we didn't specify how to split, we're just returning all of the
+    # split regions as-is as a utility function
+    if nfiles is None and perfile is None:
+        return regions
+
+    fastabase = os.path.splitext(fastafile)[0]
 
     # and write them to files
     if nfiles is not None:

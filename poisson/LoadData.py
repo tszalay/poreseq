@@ -33,8 +33,6 @@ def LoadAlignedEvents(fastafile, bamfile, eventdir, reginfo, params):
     
     return pa
 
-
-
 def LoadReference(fastafile, refname=None):
     refs = SeqIO.index(fastafile, "fasta")
     refnames = list(refs.keys())

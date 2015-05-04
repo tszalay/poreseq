@@ -10,6 +10,8 @@ from libcpp.vector cimport vector
 from libcpp cimport bool
 from libcpp.string cimport string
 
+from Util import MutationInfo,MutationScore
+
 cdef extern from "cpp/AlignUtil.h":
     cdef cppclass AlignParams:
         AlignParams()
@@ -151,13 +153,6 @@ def swalign(seq1,seq2):
         pairs.append((align.inds1[i],align.inds2[i]))
     return (align.accuracy, pairs)
 
-class MutationScore:
-    def __init__(self):
-        self.start = 0
-        self.orig = ""
-        self.mut = ""
-        self.score = 0
-
 class PoissAlign:
     def __init__(self):
         self.sequence = ""
@@ -204,6 +199,33 @@ class PoissAlign:
             data.params.scoring_width = self.params['point_width']
             
         cdef vector[MutInfo] mutations = FindPointMutations(data)
+        cdef vector[MutScore] scores = ScoreMutations(data,mutations)
+        
+        pyscores = []
+        for i in range(scores.size()):
+            s = MutationScore()
+            s.start = scores[i].start
+            s.orig = scores[i].orig
+            s.mut = scores[i].mut
+            s.score = scores[i].score
+            pyscores.append(s)
+        
+        return pyscores
+        
+    def ScoreMutations(self, muts):
+        
+        # get the score of all single-base mutations
+        cdef AlignData data = PythonToAlignData(self)
+            
+        cdef vector[MutInfo] mutations
+        cdef MutInfo mi
+        
+        for m in muts:
+            mi.start = m.start
+            mi.orig = m.orig
+            mi.mut = m.mut
+            mutations.push_back(mi)
+            
         cdef vector[MutScore] scores = ScoreMutations(data,mutations)
         
         pyscores = []
