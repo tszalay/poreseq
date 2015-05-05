@@ -1,3 +1,5 @@
+docs/_*
+
 # Matlab
 
 *.mexw32
