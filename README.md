@@ -22,31 +22,39 @@ The basic aspects of the usage are described below. For any command, the -h flag
 
 Sequence extraction from fast5 files:
 
-`poisson extract /media/run-33 ./allreads.fasta`
+* `poisson extract /media/run-33 ./allreads.fasta`
 
 Overlap alignment via LAST (outputs to allaligns.bam):
-`poissalign ./allreads.fasta ./allreads.fasta allaligns`
+
+* `poissalign ./allreads.fasta ./allreads.fasta allaligns`
 
 Split fasta into 10kb regions in 16 files for processing:
-`poisson split ./allreads.fasta -n 16 -R 10000`
+
+* `poisson split ./allreads.fasta -n 16 -R 10000`
 
 Error correction (correct the regions in the 15th file as defined by the splitting above):
-`poisson consensus -p params.conf ./allreads.fasta ./allaligns.bam /media/run-33 -R allreads.44.region -o corr.44.fasta`
+
+* `poisson consensus -p params.conf ./allreads.fasta ./allaligns.bam /media/run-33 -R allreads.44.region -o corr.44.fasta`
 
 Error correction (manually correct a specific region of a read from allreads):
-`poisson consensus -p params.conf ./allreads.fasta ./allaligns.bam /media/run-33 -r ch_23_read_11.fast5:1000:2000 -o corr.fasta`
+
+* `poisson consensus -p params.conf ./allreads.fasta ./allaligns.bam /media/run-33 -r ch_23_read_11.fast5:1000:2000 -o corr.fasta`
 
 Merge previously split and corrected sequences:
-`poisson merge merged.fasta corr.*.fasta`
+
+* `poisson merge merged.fasta corr.*.fasta`
 
 Assemble sequences using Celera assembler (with 4 threads):
-`poissemble merged.fasta genomeSize=48500 -t 4`
+
+* `poissemble merged.fasta genomeSize=48500 -t 4`
 
 Train skip and stay parameters on bases 46kb-48kb of a known reference (with 16 threads):
-`poisson train reference.fasta alignment.bam reads.fasta /media/run-data -n 16 -i 30 -p starting_params.conf -r 46000:48000`
+
+* `poisson train reference.fasta alignment.bam reads.fasta /media/run-data -n 16 -i 30 -p starting_params.conf -r 46000:48000`
 
 Score mutations listed in mutations.txt against reference:
-`poisson variant reference.fasta alignment.bam /media/run-data -m muts.txt -p params.conf`
+
+* `poisson variant reference.fasta alignment.bam /media/run-data -m muts.txt -p params.conf`
 
 Example mutations.txt (start, original, mutated):
 ```11	AC	G
