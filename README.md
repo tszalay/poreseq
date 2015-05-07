@@ -13,7 +13,7 @@ The recommended way to install poisson is from the source using git and pip:
 1. Checkout the source: `git clone git://github.com/tszalay/poisson.git`
 2. In the main directory, run `pip install -e . --user` or `sudo pip install -e .`
 
-Note that for a userspace install, ~/.local/bin needs to be on your PATH.
+Note that for a userspace install, `~/.local/bin` needs to be on your PATH.
 The Python requirements are handled by setuptools, while some of the utility scripts depend on the LAST aligner and the Celera/PBcR assembler. If you would like
 to change these requirements, edit the scripts in the scripts/ folder (and reinstall).
    
@@ -61,6 +61,20 @@ Example mutations.txt (start, original, mutated):
 1994	.	C
 2301	A	.```
 (note that start index is 0-based)
+
+Example of Python package usage:
+```import poisson
+
+params = poisson.LoadParams('./params.conf')
+reginfo = RegionInfo('10000:20000')  # RegionInfo() for whole strand
+pa = poisson.LoadAlignedEvents('reference.fasta','alignment.bam','/media/run-data',reginfo,params)
+# pa is now a PoissAlign class, pa.sequence is the consensus/ref sequence and pa.events are the loaded events
+# pa.params is the same params as loaded above
+# get likelihood score of each event, also realign events to ref.
+pa.ScoreEvents()
+# display which reference bases are aligned to by current levels 2000:3000 for event 2
+# note that these are 1-based for internal reasons
+print pa.events[2].ref_align[2000:3000]
 
 At the time of writing, “poisson consensus” takes around 2 minutes to error-correct a 1 kb region at 10X coverage, meaning that it can take tens of hours on a single CPU to error-correct the fragments before assembling λ DNA. If the coverage is sufficient, it is more efficient to assemble without doing POISSON error correction, and then using POISSON to align and refine the resulting assembly as described above. Additionally, if only a specific region of the genome is desired, POISSON can simply error correct that region, greatly reducing the time required.
 
