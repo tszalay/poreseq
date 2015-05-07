@@ -74,7 +74,7 @@ pa = poisson.LoadAlignedEvents('reference.fasta','alignment.bam','/media/run-dat
 pa.ScoreEvents()
 # display which reference bases are aligned to by current levels 2000:3000 for event 2
 # note that these are 1-based for internal reasons
-print pa.events[2].ref_align[2000:3000]
+print pa.events[2].ref_align[2000:3000]```
 
 At the time of writing, “poisson consensus” takes around 2 minutes to error-correct a 1 kb region at 10X coverage, meaning that it can take tens of hours on a single CPU to error-correct the fragments before assembling λ DNA. If the coverage is sufficient, it is more efficient to assemble without doing POISSON error correction, and then using POISSON to align and refine the resulting assembly as described above. Additionally, if only a specific region of the genome is desired, POISSON can simply error correct that region, greatly reducing the time required.
 
