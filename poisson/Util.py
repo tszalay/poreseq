@@ -1,7 +1,7 @@
 
 class RegionInfo:
 
-    def __init__(self, region):
+    def __init__(self, region=None):
 
         self.start = None
         self.end = None
