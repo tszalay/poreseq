@@ -8,7 +8,25 @@ from EventData import PoissEvent
 from poisson import poisscpp
 
 def LoadAlignedEvents(fastafile, bamfile, eventdir, reginfo, params):
-
+    """Load all of the events aligned to a reference using a bam file.
+    
+    This is the main function for loading events subject to various parameters
+    and constraints. The function returns a PoissAlign object defined in the
+    pyx file, which can then be used for subsequent processing.
+    
+    The params argument is particularly important here, for min_coverage,
+    max_coverage, min_overlap, etc.
+    
+    Args:
+        fastafile (string): reference fasta file (alignment reference)
+        bamfile (string): BAM-formatted file of alignments to reference
+        eventdir (string): folder where fast5 files are contained
+        reginfo (RegionInfo): which region to load? RegionInfo(None) for all
+        params (param dict): parameters to use for loading
+    
+    Returns:
+        PoissAlign object containing reference sequence, aligned events, and params
+    """
     # load the reference sequence    
     refseq = str(LoadReference(fastafile,reginfo.name))    
     # set region indices to full fasta, if none specified
@@ -34,6 +52,8 @@ def LoadAlignedEvents(fastafile, bamfile, eventdir, reginfo, params):
     return pa
 
 def LoadReference(fastafile, refname=None):
+    '''Loads a reference sequence from a fasta file'''
+    
     refs = SeqIO.index(fastafile, "fasta")
     refnames = list(refs.keys())
     if refname is None:
@@ -45,6 +65,17 @@ def LoadReference(fastafile, refname=None):
     return refs[refname].seq
 
 def EventsFromBAM(eventdir, bamfile, reginfo, params):
+    """Does the heavy lifting of LoadAlignedEvents, returns list of events.
+    
+    Main steps:
+    
+        - Find events aligned to specified region in the BAM file
+        - Sort these events by amount of overlap
+        - Keep unique events up to max_coverage
+        - Load events (temp. and comp.) from fast5 files
+        - Map alignments from events' own 2D seqs to the reference sequence
+        - Return a list of all loaded and aligned events
+    """
     
     # first, load a bam file
     bamfile = pysam.AlignmentFile(bamfile, "rb")

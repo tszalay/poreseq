@@ -19,7 +19,9 @@ from multiprocessing import Pool
 from Bio import SeqIO
 
 def main():
-
+    '''Main setuptools entry point for the program, handles commandline
+    arguments using argparse'''
+    
     parser = argparse.ArgumentParser(prog='poisson')
     subparsers = parser.add_subparsers(help='Nanopore sequence consensus tool')
     
@@ -117,6 +119,21 @@ def main():
 
 
 def parse_regions(args):
+    '''Takes the region and region_file arguments and parses them into
+    appropriate regions, depending on whcih are specified:
+        
+        - If args.region_file specified, load and use those regions without
+        modification
+        
+        - If region with position info specified directly, use that without
+        modification (eg. 1000:2000 or Lambda_NEB:1000:2000)
+        
+        - If region with name specified but no position, split by max_length
+        using split_regions (eg. `-r Lambda_NEB`)
+        
+        - If no region specified, split all sequences in reference fasta
+        into regions of max_length using split_regions
+    '''
     regions = []
     
     # if we specified region files, load regions from there, directly, no modifications
@@ -142,7 +159,8 @@ def parse_regions(args):
     return regions
         
 def consensus(args):
-
+    '''Consensus calling, dispatched by main()'''
+    
     # load the parameters file first
     args.params = LoadParams(args.params)
     # split up the regions as necessary
@@ -176,7 +194,8 @@ def consensus(args):
 
         
 def variant(args):
-
+    '''Variant calling, dispatched by main()'''
+    
     # load the parameters file first
     args.params = LoadParams(args.params)
     # split up the regions as necessary
@@ -210,8 +229,11 @@ def variant(args):
              continue
     
 
-# nice trick from stackoverflow to allow function pickling
 class trainhelper(object):
+    '''Helper class to allow small functions with associated data to be
+    pickled, as lambda/closures can't be pickled'''
+
+    # nice trick from stackoverflow to allow function pickling    
     def __init__(self, _args):
         self.args = _args
     def __call__(self, params):
@@ -219,6 +241,7 @@ class trainhelper(object):
                test=True,verbose=False)
 
 def train(args):
+    '''Training parameters, dispatched by main()'''
     
     # load the specified parameter file
     params = LoadParams(args.params)
@@ -241,6 +264,7 @@ def train(args):
         sys.stderr.write('Best at iter {}: {}\n'.format(i+1,max(accs)))
 
 def extract(args):
+    '''fast5 -> fasta extraction, dispatched by main()'''
     
     fast5files = []
     for d in args.dirs:
@@ -249,11 +273,14 @@ def extract(args):
 
     
 def split(args):
+    '''fasta splitting and region splitting, dispatched by main()'''
+    
     if args.region_length is None:
         split_fasta(args.fasta,args.num_files,args.per_file)
     else:
         split_regions(args.fasta,args.region_length,args.num_files,args.per_file)
 
 def merge(args):
-
+    '''Merges output of split->consensus, dispatched by main()'''
+    
     merge_fasta(args.fasta_in,args.fasta_out)

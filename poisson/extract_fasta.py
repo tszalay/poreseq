@@ -5,6 +5,7 @@ import os
 import h5py
 
 def get_fasta(filename):
+    """Get the 2D-basecalled sequence from a fast5 file"""
     
     # load fast5 file
     f = h5py.File(filename,'r')
@@ -16,7 +17,25 @@ def get_fasta(filename):
     return seq
     
 def extract_fasta(fast5files, fastafile=None, addpath=False, force=False):
-
+    """Extract all of the sequences from a list of fast5 filenames.
+    
+    By default, the fasta headers are set to the fast5 filenames without the
+    path, but if addpath is set the relative paths are also saved (this is 
+    useful if using multiple runs).
+    
+    Args:
+        fast5files (string): List of filenames
+        fastafile (string): output fasta filename
+        addpath (boolean): save relative path in fasta headers?
+        force (boolean): overwrite fasta file?
+    
+    Returns:
+        None
+        
+    Raises:
+        None
+    """
+    
     # did we get a non-empty list?    
     if not fast5files:
         raise Exception('No files specified!')

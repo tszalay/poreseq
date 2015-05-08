@@ -15,7 +15,8 @@ The recommended way to install poisson is from the source using git and pip:
 
 Note that for a userspace install, `~/.local/bin` needs to be on your PATH.
 The Python requirements are handled by setuptools, while some of the utility scripts depend on the LAST aligner and the Celera/PBcR assembler. If you would like
-to change these requirements, edit the scripts in the scripts/ folder (and reinstall).
+to change these requirements, edit the scripts in the scripts/ folder (and reinstall). Note that the poissemble script, in addition to
+needing PBcR, also needs the correct path to poisson.spec and should be updated as such.
    
 ## Examples
 The basic aspects of the usage are described below. For any command, the -h flag displays help.
@@ -71,7 +72,7 @@ Example of Python package usage:
 import poisson
 
 params = poisson.LoadParams('./params.conf')
-reginfo = RegionInfo('10000:20000')  # RegionInfo() for whole strand
+reginfo = poisson.RegionInfo('10000:20000')  # poisson.RegionInfo() for whole strand
 pa = poisson.LoadAlignedEvents('reference.fasta','alignment.bam','/media/run-data',reginfo,params)
 # pa is now a PoissAlign class, pa.sequence is the consensus/ref sequence
 # pa.events are the loaded events and pa.params is the same params as loaded above

@@ -4,7 +4,17 @@ import random
 from Bio import SeqIO
 
 def split_fasta(fastafile, nchunks=None, nseqs=None):
-
+    """Split all of the sequences in fastafile into multiple fasta files.
+    
+    This is one way to split up the error correction of many sequences (eg.
+    fast5-extracted sequences) into sub-tasks. Specifying nchunks splits up 
+    sequences into nchunks files, while nseqs puts nseqs sequences into each file.
+    
+    Args:
+        fastafile (string): fasta file containing many sequences
+        nchunks(int): how many files to split to
+        nseqs(int): how many sequences to write per file    
+    """
     refs = SeqIO.index(fastafile, "fasta")
     
     if nchunks is None and nseqs is None:
@@ -38,7 +48,37 @@ def split_fasta(fastafile, nchunks=None, nseqs=None):
 
 
 def split_regions(fastafile, region_length, nfiles=None, perfile=None, userefs=None):
-
+    """Generates region strings for splitting up sequences in fastafile.
+    
+    This is the main function for splitting up work into overlapping chunks of
+    size region_length. If nfiles or perfile is specified, it outputs the region
+    strings to files, otherwise just returns them. For example:
+    
+    >sequence1
+    ACCCGT....... (length 35000)
+    
+    will lead to the following region strings (for region_length=10000):
+    
+    sequence1:0:10000
+    sequence1:9000:19000
+    sequence1:18000:28000
+    sequence1:27000:35000
+    
+    which are either returned or saved to a file. If userefs is not specified,
+    this is done for all sequences in fastafile.
+    
+    Args:
+        fastafile (string): reference fasta file
+        region_length (int): length of each region
+        nfiles(int): write region strings to N files
+        perfile(int): write M region strings to each file
+        userefs(list(string)): get regions only from these references
+    
+    Returns:
+        list(string): list of region strings, if no file output specified
+        None, if file output specified
+    """
+    
     refs = SeqIO.index(fastafile, "fasta")
     
     region_length = int(region_length)

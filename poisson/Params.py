@@ -26,7 +26,7 @@ def SaveParams(filename, params):
             f.write('{} = {}\n'.format(p,params[p]))
             
 def VaryParams(params):
-    '''Return a list of param dicts with modifications'''
+    '''Return a list of param dicts with modifications, used by training'''
 
     paramlist = []
     fac = 1.2

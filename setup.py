@@ -10,7 +10,7 @@ setup(
     description="POISSON alignment utility for nanopore sequencing data",
     author="Tamas Szalay",
     packages=find_packages(),
-    install_requires=["Cython>0.18"],
+    install_requires=["Cython>0.18","Biopython>1.6", "pysam>0.8.2"],
     scripts=[
         'scripts/poissalign',
         'scripts/poissemble'

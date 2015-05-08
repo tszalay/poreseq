@@ -4,14 +4,65 @@ import numpy as np
 import copy
 from Bio.Seq import Seq
 
+
+
 def MakeContiguous(pyobj):
+    """Makes all numpy fields of object into memory-contiguous arrays.
+    
+    Loops through all attributes of pyobj, and makes any numpy.ndarray object
+    found contiguous using np.ascontiguousarray (assumes double arrays).
+    
+    Args:
+        pyobj (class): Class to make contiguous
+    
+    Returns:
+        None
+        
+    Raises:
+        None
+    """
     attrs = [attr for attr in dir(pyobj) if not callable(attr) and not attr.startswith("__")]
     for attr in attrs:
         val = getattr(pyobj,attr)
         if type(val) == np.ndarray:
             setattr(pyobj,attr,np.ascontiguousarray(val,dtype='f8'))
+            
+            
+def LoadEvents(filenames):
+    '''Load all events corresponding to a list of filenames, both t and c'''
+    
+    events = []
+    for fn in filenames:
+        try:
+            events.append(PoissEvent(fn,'t'))
+        except Exception:
+            pass
+        try:
+            events.append(PoissEvent(fn,'c'))
+        except Exception:
+            pass
+    return events
+    
 
 class PoissModel:
+    """Class containing all trained model parameters for a single event.
+    
+    Many of the parameters are loaded from the fast5 data, and the remaining
+    skip and stay params are provided in the paramfile.
+    
+    Note that sd_mean and sd_stdv are loaded and scaled, but in the C++
+    code they actually get converted to an inverse gaussian distribution.
+    
+    Attributes:
+        level_mean (double x 1024): expected 5mer currents
+        level_stdv (double x 1024): width of distribution of level_mean
+        sd_mean (double x 1024): expected current noise on 5mers
+        sd_stdv (double x 1024): deviation of above
+        prob_* (double): probabilities of skips, stays, etc. from params
+        name (string): Oxford-given name of model
+        complement (boolean): Is this a complement model?
+    """
+    
     def __init__(self):
         self.level_mean = []
         self.level_stdv = []
@@ -25,7 +76,41 @@ class PoissModel:
         self.complement = False
 
 class PoissEvent():
+    """Class containing all data associated with a single read.
+    
+    In this case, the template and complement of a single-molecule read will
+    be stored as separate events.
+    
+    NOTE: complement reads are flipped by default - that is, the current level
+    sequences are reversed, and the model is flipped as well to the reverse
+    complement read, so that template and complement reads point in the same
+    direction.
+        
+    Attributes:
+        mean (double x N): average of measured current values
+        stdv (double x N): deviation of measured current values
+        length (double x N): duration of measured current values
+        start (double x N): start time of measured current values
+        ref_align (double x N): reference base each current level aligns to
+        ref_like (double x N): cumulative aligned likelihood at each current level        
+        model (PoissModel): model associated with this event
+        sequence (string): extracted 2D sequence from fast5
+        flipped (boolean): has this event been flipped?
+    """
+    
     def __init__(self, filename,typ):
+        """Loads a template or complement event from a fast5 file.
+    
+        Loads and scales the event and model from a fast5 file, from one
+        side only.
+        
+        Args:
+            filename (string): fast5 filename
+            typ (string): 't' or 'c' for template/complement
+        
+        Returns:
+            None
+        """  
         # load fast5 file
         f = h5py.File(filename,'r')
         # and try to read the data from the location
@@ -91,10 +176,22 @@ class PoissEvent():
             self.flip(False)
     
     def copy(self):
+        '''Calls copy.deepcopy on self and returns it.'''
+        
         return copy.deepcopy(self)        
         
     def flip(self, flip_sequence=True):
+        """Flips the event and model.
+    
+        In-place reverses all of the events' double x N fields and maps each model
+        state to its reverse complement (ACCGG -> CCGGT).
         
+        Args:
+            flip_sequence (boolean): whether to reverse-complement self.sequence
+        
+        Returns:
+            None
+        """
         # flip event members
         self.mean = self.mean[::-1]
         self.stdv = self.stdv[::-1]
@@ -128,6 +225,20 @@ class PoissEvent():
         self.flipped = not self.flipped
             
     def mapaligns(self, pairs):
+        """Re-maps ref_align using list of pairs of aligned indices between old and new.
+    
+        Uses the result of swalign or pysam functions to shift the event's
+        alignment from one sequence to another, for example:        
+            pairs = [(10, 20), (11,21), (12,22), ...]
+        specifies that where the current ref_align == 10, it should be shifted
+        to 20, 11 -> 21, etc.
+            
+        Args:
+            pairs (list of pairs): ints of the form [(i0,j0),(i1,j1),...]
+        
+        Returns:
+            None
+        """
         # re-map ref_aligns using provided pairs
         # first index is to current (ref_align) sequence, second is to new ref
         # (should be numpy array)
@@ -146,10 +257,23 @@ class PoissEvent():
         self.makecontiguous()
         
     def makecontiguous(self):
+        '''Makes numpy arrays in event and model contiguous.'''
+        
         MakeContiguous(self)
         MakeContiguous(self.model)
     
     def getrefstats(self):
+        """Calculate some simple alignment statistics.
+        
+        Gets the fraction of current levels that are skips, stays, and insertions.
+                
+        Args:
+            None
+        
+        Returns:
+            Tuple of (skips, stays, insertions)
+        """
+        
         # figure out statistics of alignment to ref_align (skips,stays,etc)
         bins = np.bincount(np.int64(self.ref_align[self.ref_align>=0]))
         # ref_align positions not appearing
@@ -163,6 +287,19 @@ class PoissEvent():
         return (skips/total,stays/total,inserts/total)
         
     def setparams(self, params):
+        """Uses param dictionary to set events' model params.
+    
+        Takes a dictionary loaded from a .conf file and uses the values to set
+        self.model.prob_*. For example, self.model.prob_skip = params['skip_t']
+        (if the event is a template event)
+            
+        Args:
+            params (dict): dictionary of parameters
+        
+        Returns:
+            None
+        """
+        
         # set skip/stay params
         # expects keys of the form 'insert_t' and sets properties
         # of the form 'prob_insert' in eg. template models only
@@ -174,17 +311,3 @@ class PoissEvent():
             if ((k[-2:] == '_t' and not self.model.complement)
                 or (k[-2:] == '_c' and self.model.complement)):
                 setattr(self.model,paramname,params[k])
-
-def LoadEvents(filenames):
-    # load all events corresponding to filenames
-    events = []
-    for fn in filenames:
-        try:
-            events.append(PoissEvent(fn,'t'))
-        except Exception:
-            pass
-        try:
-            events.append(PoissEvent(fn,'c'))
-        except Exception:
-            pass
-    return events

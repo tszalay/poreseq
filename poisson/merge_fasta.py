@@ -6,7 +6,19 @@ from poisscpp import swalign
 import pdb
 
 def merge_seqs(seq1, seq2, overlap):
-    
+    '''Merge seq1 and seq2 assuming there are 'overlap' bases in common.
+
+    Aligns the last 'overlap' bases of seq1 with the first 'overlap' bases of
+    seq2, and if they align well enough, it joins them halfway.
+
+    Args:
+        seq1 (string): first sequence, goes on the left
+        seq2 (string): second sequence, on the right
+        overlap (int): usually 1000
+        
+    Returns:
+        Joined sequence
+    '''
     # assumes the last "overlap" bases of seq1 and the first "overlap" bases of seq2 overlap
     i0 = -overlap
     i1 = overlap
@@ -28,7 +40,17 @@ def merge_seqs(seq1, seq2, overlap):
     
 
 def merge_fasta(fastafiles, fastaout):
-
+    """Merge all of the sequences in fastafiles and put them in fastaout.
+    
+    Loads all of the sequences in fastafiles. If any of the headers have
+    positional regions appended (eg. >filename.fast5:10000:20000), uses
+    these regions to attempt to merge all of the sequences and save the full
+    >filename.fast5 as a single sequence.
+    
+    Args:
+        fastafiles (list(string): list of fasta filenames
+        fastaout (string): output fasta filename
+    """
     fragments = {}
 
     # loop through each given fasta file and load them

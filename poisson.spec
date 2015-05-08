@@ -1,3 +1,5 @@
+# based on Loman's oxford.spec with the new PBcR
+
 #doFragmentCorrection = 0
 #assembleCoverage = 2
 #assembleMinCoverage = 1

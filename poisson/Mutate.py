@@ -6,7 +6,31 @@ import pdb
 import sys
 
 def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test=False):
-
+    """Run consensus-calling mutations given required info.
+    
+    This function is the main one called by the setuptools entry points for
+    consensus calling, that is, 
+        main() -> consensus() -> Mutate(...) -> PoissAlign.Mutate(...)
+        
+    Use this function if you want to basically run poisson consensus from
+    within Python.
+    
+    It takes care of loading events and mutating in different ways, and if the test
+    flag is specified, it starts with a low-accuracy 2D sequence instead of the ref.
+    
+    Args:
+        fastafile (string): reference fasta file (alignment reference)
+        bamfile (string): BAM-formatted file of alignments to reference
+        fast5dir (string): folder where fast5 files are contained
+        region (string): region string, or None for whole reference
+        params (param dict): parameters to use for loading
+        verbose (int): 0 for silent, 1 for steps, 2 for full mutations
+        test (boolean): start with low-accuracy 2D sequence?
+    
+    Returns:
+        sequence (string): mutated higher-accuracy consensus sequence        
+    """
+    
     pa = LoadAlignedEvents(fastafile,bamfile,fast5dir,RegionInfo(region),params)
     pa.params['verbose'] = verbose
     

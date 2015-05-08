@@ -49,6 +49,7 @@ cdef extern from "cpp/EventData.h":
         Sequence sequence
         vector[double] mean
         vector[double] ref_align
+        vector[double] ref_like
 
         EventData()
         void setData(int length, double* mean, double* stdv, double* ref_align, double* ref_like)
@@ -83,10 +84,11 @@ cdef extern from "cpp/Viterbi.h":
     
             
 cdef double* getPr(np.ndarray[double, ndim=1, mode="c"] nparr):
+    # get the pointer to a numpy ndarray, while ensuring it is contiguous
     return &nparr[0]
 
 cdef vector[Sequence] PythonToSequences(pyseqs):
-
+    # convert a list of strings to a C++ vector of Sequence classes
     cdef vector[Sequence] seqs
     
     for pyseq in pyseqs:
@@ -95,7 +97,7 @@ cdef vector[Sequence] PythonToSequences(pyseqs):
     return seqs
 
 cdef vector[EventData] PythonToEvents(pyevents):
-    
+    # create C++ events from python PoissEvent objects
     cdef vector[EventData] events
     cdef EventData event
     
@@ -127,11 +129,15 @@ cdef vector[EventData] PythonToEvents(pyevents):
     return events
 
 cdef UpdatePythonEvents(pyevents, AlignData& data):
+    '''Saves the computed values from from the C++ events to Python events
+    (ref_align and ref_likes)'''
     for i,ev in enumerate(pyevents):
         ev.ref_align[:] = data.events[i].ref_align
+        ev.ref_like[:] = data.events[i].ref_like
     return pyevents
     
 cdef AlignData PythonToAlignData(obj):
+    '''Creates C++ AlignData from Python's PoissAlign'''
     cdef AlignData data
     data.sequence = Sequence(obj.sequence)
     data.events = PythonToEvents(obj.events)
@@ -147,6 +153,20 @@ cdef AlignData PythonToAlignData(obj):
     return data
     
 def swalign(seq1,seq2):
+    """Smith-Waterman align two sequences.
+    
+    Uses a full-matrix SW alignment function to calculate alignments of seq1
+    and seq2. This is a wrapper for C++, so it is fast, but expect the memory
+    to go as N^2; in practice, sequences longer than 20kb become troublesome.
+    
+    Args:
+        seq1 (string): DNA sequence to align
+        seq2 (string): DNA sequence to align
+    
+    Returns:
+        Tuple of (accuracy, pairs): returns the accuracy (in %) and a list of
+        tuples of pairwise aligned indices.
+    """
     cdef SWAlignment align = swfull(seq1,seq2)
     pairs = []
     for i in range(align.inds1.size()):
@@ -154,15 +174,48 @@ def swalign(seq1,seq2):
     return (align.accuracy, pairs)
 
 class PoissAlign:
+    """Class containing all data associated with reads aligned to a reference.
+
+    This is the go-to class for loading and analyzing aligned event data.
+    All class methods are in-place and mutable/non-const, use .Copy() if non-
+    destructive behavior is desired.
+    
+    Note also that loaded events aren't realigned by default, until any of the
+    .Score... functions are called.
+
+    Example:
+
+        params = poisson.LoadParams('./params.conf')
+        reginfo = poisson.RegionInfo('10000:20000')
+        # pa is the PoissAlign class
+        pa = poisson.LoadAlignedEvents('reference.fasta','alignment.bam',
+                                       '/media/run-data',reginfo,params)
+        scores = pa.ScoreEvents()  # this forces realignment
+        print pa.events[2].ref_align[2000:3000]    
+        
+    Attributes:
+        sequence (string): the reference that events are currently aligned to
+        events (list(PoissEvent)): aligned PoissEvent classes
+        params (params dict): parameters to use for sub-functions
+    """
+    
     def __init__(self):
+        '''Empty initializer'''
         self.sequence = ""
         self.events = []
         self.params = {}
         
     def Copy(self):
+        '''Wrapper around copy.deepcopy'''
         return copy.deepcopy(self)
         
     def Coverage(self):
+        """Calculate depth of coverage across the reference.
+    
+        Returns:
+            double x N ndarray: the number of events aligned at each of the
+                N bases of self.sequence
+        """
         cov = np.zeros(len(self.sequence))
         for ev in self.events:
             nzs = ev.ref_align[ev.ref_align>0]
@@ -173,6 +226,18 @@ class PoissAlign:
         return cov
         
     def RealignTo(self, newseq):
+        """Realign all of the events to a new reference sequence using swalign.
+    
+        This function uses Smith-Waterman to in-place realign the loaded events to a
+        new reference (and updates self.sequence). Useful for scoring a similar
+        but not identical sequence.
+        
+        Args:
+            newseq (string): sequence that aligns to self.sequence
+        
+        Returns:
+            None
+        """
         # calculate the alignments
         align = swalign(self.sequence, newseq)
         if align[0] < 0.6:
@@ -183,7 +248,14 @@ class PoissAlign:
         self.sequence = newseq
         
     def ScoreEvents(self):
+        """Calculate likelihood score of all aligned events.
     
+        This function realigns all events to the reference and recalculates
+        all of the total likelihood scores for each event.
+        
+        Returns:
+            M x double of likelihood scores for each event in self.events
+        """
         # calculate likelihoods over all of the strands
         cdef AlignData data = PythonToAlignData(self)
         # and get the scores, without the aligned likelihoods
@@ -191,6 +263,16 @@ class PoissAlign:
         return scores
         
     def ScorePoints(self):
+        """Calculate mutation score of all single base mutations.
+    
+        This function returns a list of MutationScore() objects for each
+        possible single base mutation in the sequence. Trivial mutations
+        (eg. A -> A) are omitted, but redundant ones (eg. deletions in
+        homopolymer regions) are not.
+        
+        Returns:
+            list(MutationScore) for all single-base mutations
+        """
         
         # get the score of all single-base mutations
         cdef AlignData data = PythonToAlignData(self)
@@ -213,7 +295,17 @@ class PoissAlign:
         return pyscores
         
     def ScoreMutations(self, muts):
+        """Calculate mutation score of specific mutations.
+    
+        This function returns a list of MutationScore() objects for each
+        MutationInfo in muts, with the score calculated.
         
+        Args:
+            muts (list(MutationInfo)): list of mutations to test
+        
+        Returns:
+            list(MutationScore) for all mutations given
+        """
         # get the score of all single-base mutations
         cdef AlignData data = PythonToAlignData(self)
             
@@ -240,6 +332,17 @@ class PoissAlign:
         return pyscores
         
     def ApplyMuts(self, pymuts):
+        """Make specific mutations.
+    
+        Don't use this function, its behavior is a bit dodgy. The C++ code 
+        will attempt to make all positive-scoring mutations, but if there are
+        ones too close together, they will be saved for a second pass and then
+        re-scored and re-tested. This function should really just make them
+        forcibly.
+        
+        Args:
+            muts (list(MutationInfo)): list of mutations to make        
+        """
         # get the score of all single-base mutations
         cdef AlignData data = PythonToAlignData(self)
         if 'point_width' in self.params:
@@ -260,6 +363,35 @@ class PoissAlign:
         
         
     def Mutate(self,seqs='self',reps=4):
+        """Take similar sequences and use them to mutate the consensus sequence.
+    
+        This function is the first of two used in consensus error correction.
+        It can either take all of the 2D sequences in loaded events, a user-
+        supplied list of sequences, or generate Viterbi sequences, and it uses
+        these sequences as seeds for mutations to test and make to improve the
+        overall accuracy.
+        
+        The mutation finding is cached in AlignData for later iterations, so
+        even though it 'finds' mutations multiple times, only the first one
+        takes a long time.
+        
+        Example, from overlap alignment:
+        
+            params = poisson.LoadParams('./params.conf')
+            reginfo = poisson.RegionInfo('ch_22_strand_55.fast5:10000:20000')
+            # pa is the PoissAlign class
+            pa = poisson.LoadAlignedEvents('extracted.fasta','alignment.bam',
+                                       '/media/run-data',reginfo,params)
+            pa.Mutate()
+       
+        Args:
+            seqs (string, list(string)): either 'self','viterbi' or a list of
+                            sequences to use
+            reps (int): how many times to repeat the mutation testing
+        
+        Returns:
+            nbases (int): total number of bases mutated
+        """
         cdef AlignData data = PythonToAlignData(self)
         
         cdef vector[Sequence] sequences
@@ -290,6 +422,31 @@ class PoissAlign:
         return totbases
         
     def Refine(self):
+        """Test all single-base mutations to improve the consensus sequence.
+    
+        This function is the second of two used in consensus error correction.
+        It brute force tests each single base substitution, deletion, and insertion
+        in order to find and make any that improve the overall score.
+        
+        This is sped up by the use of the narrower point_width as specified in
+        params.
+        
+        For example, to do basic variant calling:
+        
+            params = poisson.LoadParams('./params.conf')
+            reginfo = poisson.RegionInfo('10000:20000')
+            # pa is the PoissAlign class
+            pa = poisson.LoadAlignedEvents('reference.fasta','alignment.bam',
+                                       '/media/run-data',reginfo,params)
+            pa.Refine()
+            
+        at which point pa.sequence is the new sequence with all variants,
+        and can be compared to the original reference to find differences.
+       
+        Returns:
+            nbases (int): total number of bases mutated
+        """
+        
         cdef AlignData data = PythonToAlignData(self)
         # override scoring width with point mutation width if available
         if 'point_width' in self.params:
