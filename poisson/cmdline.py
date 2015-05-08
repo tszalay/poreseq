@@ -1,7 +1,7 @@
 from Mutate import Mutate
 from Variant import Variant
 from Util import *
-from ParamData import *
+from Params import *
 from extract_fasta import extract_fasta
 from split_fasta import split_fasta, split_regions
 from merge_fasta import merge_fasta
