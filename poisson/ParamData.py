@@ -1,5 +1,6 @@
 def LoadParams(filename):
     '''Load parameter configuration file'''
+    
     params = {}
     if filename is None:
         return params
@@ -9,7 +10,12 @@ def LoadParams(filename):
         for sl in splitlines:
             if len(sl) == 2:
                 pname = sl[0].strip()
-                params[pname] = float(sl[1])
+                # skip lines that throw an error
+                # silent failure is bad, except when it isn't
+                try:
+                    params[pname] = float(sl[1])
+                except:
+                    pass
                 
     return params
     
