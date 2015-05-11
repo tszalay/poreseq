@@ -17,7 +17,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-        'poisson = poisson.cmdline:main',
+            'poisson = poisson.cmdline:main',
+        ]
     },
     ext_modules=[Extension(name="poisson.poisscpp",
                            sources=["poisson/_poisscpp.pyx",
