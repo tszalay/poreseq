@@ -56,6 +56,8 @@ def main():
                         help='fasta of variant sequences to test')
     group.add_argument('-m', '--mut-file', default=None, 
                         help='file with mutations to test')
+    group.add_argument('-a', '--all', action='store_true', default=False,
+                        help='test all single-base mutations')
     
     group = parse_var.add_mutually_exclusive_group(required=False)
     group.add_argument('-r', '--region', default=None,
@@ -83,6 +85,8 @@ def main():
                         help='initial parameter file to use')
     parse_train.add_argument('-r', '--region', default=None, 
                         help='region to train on (eg. 1000:3000 or header_name:1000:3000)')
+    parse_train.add_argument('-d', '--descend', action='store_true', default=False,
+                             help='Run consensus by descending from reference')
     parse_train.set_defaults(func=train)
     
     # short utility parsers: split
@@ -238,7 +242,7 @@ class trainhelper(object):
         self.args = _args
     def __call__(self, params):
         return Mutate(self.args.ref,self.args.bam,self.args.dir,params=params,region=self.args.region,
-               test=True,verbose=False)
+               test=(not args.descend),verbose=False)
 
 def train(args):
     '''Training parameters, dispatched by main()'''

@@ -8,7 +8,7 @@ from Util import RegionInfo
 
 
 
-def Variant(ref_fasta, bamfile, fast5dir, var_fasta=None, muts=[], region=None, params={}, verbose=0):
+def Variant(ref_fasta, bamfile, fast5dir, var_fasta=None, muts=None, region=None, params={}, verbose=0):
     """Run variant-calling given required info.
     
     This function is the main one called by the setuptools entry points for
@@ -23,7 +23,7 @@ def Variant(ref_fasta, bamfile, fast5dir, var_fasta=None, muts=[], region=None, 
         bamfile (string): BAM-formatted file of alignments to reference
         fast5dir (string): folder where fast5 files are contained
         var_fasta (string): fasta sequences to compare to reference
-        muts (list(MutInfo)): list of mutations to test
+        muts (list(MutInfo)): list of mutations to test, empty to test all points
         region (string): region string, or None for whole reference
         params (param dict): parameters to use for loading
         verbose (int): 0 for silent, 1 for steps, 2 for full mutations
@@ -63,16 +63,19 @@ def Variant(ref_fasta, bamfile, fast5dir, var_fasta=None, muts=[], region=None, 
         return variantscores
     
     # otherwise, score the mutations as specified
-    if len(muts) > 0:        
+    if muts is not None:
         if verbose > 0:
             sys.stderr.write("Variant calling {} using {} events\n".format(region,len(pa.events)))
-
+            
         # offset the start to where pa.sequence begins
         for m in muts:
             m.start -= reginfo.start
-        # now check to see if they're within 
-        # and score them
-        mutscores = pa.ScoreMutations(muts)
+            
+        # now score mutations, either specified, or all of them
+        if len(muts) > 0:
+            mutscores = pa.ScoreMutations(muts)
+        else:
+            mutscores = pa.ScorePoints()
         for ms in mutscores:
             # now set the start back
             ms.start += reginfo.start
