@@ -35,6 +35,8 @@ def main():
                         help='region to correct (eg. 1000:3000 or header_name:1000:3000)')
     group.add_argument('-R', '--region-file', default=None,
                         help='file containing region strings, one per line')
+    parse_cons.add_argument('-i', '--iterations', type=int, default=4,
+                        help='how many iterations to run')
     parse_cons.add_argument('-p', '--params', default=None,
                         help='parameter file to use')
     parse_cons.add_argument('-v', '--verbose', action="count", default=0,
@@ -167,6 +169,7 @@ def consensus(args):
     
     # load the parameters file first
     args.params = LoadParams(args.params)
+    args.params['verbose'] = args.verbose
     # split up the regions as necessary
     regions = parse_regions(args)
 
@@ -178,16 +181,12 @@ def consensus(args):
     # (continue on errors)
     for region in regions:
         try:
-            seq = Mutate(args.ref,args.bam,args.dir,params=args.params,region=region,
-                         test=args.test,verbose=args.verbose)
+            (seq,acc) = Mutate(args.ref,args.bam,args.dir,params=args.params,region=region,
+                         test=args.test,verbose=args.verbose,reps=args.iterations)
         except Exception as e:
              sys.stderr.write('Skipping {}: {}\n'.format(region,str(e)))
              continue
                          
-        # test mode output returns accuracy as well
-        if args.test:
-            (seq, acc) = seq
-            
         # print corrected fasta string with region as header
         if args.test:
             region += ' [' + str(round(acc,2)) + ']'
@@ -223,7 +222,7 @@ def variant(args):
         # get subset of mutations
         curmuts = [x for x in muts if x.start < reginfo.end - args.params['end_trim']]
         muts = [x for x in muts if x.start >= reginfo.end - args.params['end_trim']]
-        if curmuts == []:
+        if curmuts == [] and not args.all:
             continue
         
         try:
@@ -242,7 +241,7 @@ class trainhelper(object):
         self.args = _args
     def __call__(self, params):
         return Mutate(self.args.ref,self.args.bam,self.args.dir,params=params,region=self.args.region,
-               test=(not args.descend),verbose=False)
+               test=(not self.args.descend),verbose=1,reps=10)
 
 def train(args):
     '''Training parameters, dispatched by main()'''

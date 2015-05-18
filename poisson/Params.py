@@ -1,3 +1,6 @@
+import random
+import pdb
+
 def LoadParams(filename):
     '''Load parameter configuration file'''
     
@@ -30,7 +33,8 @@ def VaryParams(params):
 
     paramlist = []
     fac = 1.2
-    
+
+    '''
     for p in params:
         # only vary relevant (non-configurational) params
         if p[-2:]=='_t' or p[-2:]=='_c':
@@ -41,5 +45,16 @@ def VaryParams(params):
             newparams = params.copy()
             newparams[p] = params[p]/fac
             paramlist.append(newparams)
+            '''
+
+    pnames = [x for x in params.keys() if x[-2:] == '_t' or x[-2:] == '_c']
+
+    for i in range(16):
+        newparams = params.copy()
+        newkeys = random.sample(pnames,3)
+        for k in newkeys:
+            newparams[k] *= random.gauss(1.0,0.15)
+        paramlist.append(newparams)
+        
             
     return paramlist

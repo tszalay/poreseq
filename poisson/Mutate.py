@@ -5,7 +5,7 @@ import poisscpp
 import pdb
 import sys
 
-def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test=False):
+def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test=False, reps=4):
     """Run consensus-calling mutations given required info.
     
     This function is the main one called by the setuptools entry points for
@@ -26,13 +26,17 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test
         params (param dict): parameters to use for loading
         verbose (int): 0 for silent, 1 for steps, 2 for full mutations
         test (boolean): start with low-accuracy 2D sequence?
+        reps (int): number of iterations for mutation and refinement
     
     Returns:
-        sequence (string): mutated higher-accuracy consensus sequence        
+        tuple(sequence (string), acc (float)): mutated higher-accuracy consensus sequence
+        along with its accuracy relative to the reference
     """
+
+    if 'verbose' not in params:
+        params['verbose'] = 0
     
     pa = LoadAlignedEvents(fastafile,bamfile,fast5dir,RegionInfo(region),params)
-    pa.params['verbose'] = verbose
     
     # and the loaded reference sequence
     refseq = pa.sequence
@@ -66,18 +70,18 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test
     if test:
         sys.stderr.write("Starting accuracy: " + str(round(poisscpp.swalign(pa.sequence,refseq)[0],1)) + "%\n")
 
-    pa.Mutate()
+    pa.Mutate(reps=reps)
     
-    if test:
+    if verbose>0:
         acc = poisscpp.swalign(pa.sequence,refseq)[0]
         sys.stderr.write("Accuracy: " + str(round(acc,1)) + "%\n")
 
-    for i in range(3):
+    for i in range(reps):
         
         pa.Mutate(seqs='viterbi')
         nbases = pa.Refine()
         
-        if test:
+        if verbose>0:
             acc = poisscpp.swalign(pa.sequence,refseq)[0]
             sys.stderr.write("Accuracy: " + str(round(acc,1)) + "%\n")
         if nbases == 0:
@@ -89,11 +93,12 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test
 
         
     # find the aligned sequence stats
-    if test:
-        acc,inds = poisscpp.swalign(pa.sequence,refseq)
+    acc,inds = poisscpp.swalign(pa.sequence,refseq)
+
+    if verbose>0:
         errs = np.sum(np.array(inds)==0,0)
         sys.stderr.write("Final accuracy: " + str(round(acc,1)) + "%\n")
         sys.stderr.write("Insertions: {}, Deletions: {}\n".format(errs[0],errs[1]))
-        return (pa.sequence, acc)
-    
-    return pa.sequence
+        sys.stderr.write("Final coverage: " + str(round(np.mean(pa.Coverage()),1)) + "X\n")
+
+    return (pa.sequence, acc)

@@ -76,9 +76,20 @@ def Variant(ref_fasta, bamfile, fast5dir, var_fasta=None, muts=None, region=None
             mutscores = pa.ScoreMutations(muts)
         else:
             mutscores = pa.ScorePoints()
+
+        npos = 0
+        ntot = 0
         for ms in mutscores:
+            # check if outside end trim
+            if ms.start > params['end_trim'] and ms.start < len(pa.sequence) - params['end_trim']:
+                ntot += 1
+                if ms.score > 0:
+                    npos += 1
             # now set the start back
             ms.start += reginfo.start
             sys.stdout.write(str(ms) + '\n')
             
+        if verbose > 0:
+            sys.stderr.write("{}% positive variants\n".format(100*float(npos)/ntot))
+            sys.stderr.write("Final coverage: " + str(round(np.mean(pa.Coverage()),1)) + "X\n")
         return mutscores
