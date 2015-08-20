@@ -172,6 +172,19 @@ def swalign(seq1,seq2):
     for i in range(align.inds1.size()):
         pairs.append((align.inds1[i],align.inds2[i]))
     return (align.accuracy, pairs)
+    
+def seqtostates(seq):
+    """Convert nucleotide sequence to 5mer states [0,1023]
+        
+    Args:
+        seq (string): DNA sequence to convert
+    
+    Returns:
+        states: numpy array of states [0,1023]
+    """
+    cdef Sequence cseq
+    cseq = Sequence(seq)
+    return cseq.states
 
 class PoissAlign:
     """Class containing all data associated with reads aligned to a reference.
