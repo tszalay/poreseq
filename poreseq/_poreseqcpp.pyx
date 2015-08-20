@@ -97,7 +97,7 @@ cdef vector[Sequence] PythonToSequences(pyseqs):
     return seqs
 
 cdef vector[EventData] PythonToEvents(pyevents):
-    # create C++ events from python PoissEvent objects
+    # create C++ events from python PSEvent objects
     cdef vector[EventData] events
     cdef EventData event
     
@@ -137,7 +137,7 @@ cdef UpdatePythonEvents(pyevents, AlignData& data):
     return pyevents
     
 cdef AlignData PythonToAlignData(obj):
-    '''Creates C++ AlignData from Python's PoissAlign'''
+    '''Creates C++ AlignData from Python's PSAlign'''
     cdef AlignData data
     data.sequence = Sequence(obj.sequence)
     data.events = PythonToEvents(obj.events)
@@ -186,7 +186,7 @@ def seqtostates(seq):
     cseq = Sequence(seq)
     return cseq.states
 
-class PoissAlign:
+class PSAlign:
     """Class containing all data associated with reads aligned to a reference.
 
     This is the go-to class for loading and analyzing aligned event data.
@@ -198,17 +198,17 @@ class PoissAlign:
 
     Example:
 
-        params = poisson.LoadParams('./params.conf')
-        reginfo = poisson.RegionInfo('10000:20000')
-        # pa is the PoissAlign class
-        pa = poisson.LoadAlignedEvents('reference.fasta','alignment.bam',
+        params = poreseq.LoadParams('./params.conf')
+        reginfo = poreseq.RegionInfo('10000:20000')
+        # pa is the PSAlign class
+        pa = poreseq.LoadAlignedEvents('reference.fasta','alignment.bam',
                                        '/media/run-data',reginfo,params)
         scores = pa.ScoreEvents()  # this forces realignment
         print pa.events[2].ref_align[2000:3000]    
         
     Attributes:
         sequence (string): the reference that events are currently aligned to
-        events (list(PoissEvent)): aligned PoissEvent classes
+        events (list(PSEvent)): aligned PSEvent classes
         params (params dict): parameters to use for sub-functions
     """
     
@@ -390,10 +390,10 @@ class PoissAlign:
         
         Example, from overlap alignment:
         
-            params = poisson.LoadParams('./params.conf')
-            reginfo = poisson.RegionInfo('ch_22_strand_55.fast5:10000:20000')
-            # pa is the PoissAlign class
-            pa = poisson.LoadAlignedEvents('extracted.fasta','alignment.bam',
+            params = poreseq.LoadParams('./params.conf')
+            reginfo = poreseq.RegionInfo('ch_22_strand_55.fast5:10000:20000')
+            # pa is the PSAlign class
+            pa = poreseq.LoadAlignedEvents('extracted.fasta','alignment.bam',
                                        '/media/run-data',reginfo,params)
             pa.Mutate()
        
@@ -446,10 +446,10 @@ class PoissAlign:
         
         For example, to do basic variant calling:
         
-            params = poisson.LoadParams('./params.conf')
-            reginfo = poisson.RegionInfo('10000:20000')
-            # pa is the PoissAlign class
-            pa = poisson.LoadAlignedEvents('reference.fasta','alignment.bam',
+            params = poreseq.LoadParams('./params.conf')
+            reginfo = poreseq.RegionInfo('10000:20000')
+            # pa is the PSAlign class
+            pa = poreseq.LoadAlignedEvents('reference.fasta','alignment.bam',
                                        '/media/run-data',reginfo,params)
             pa.Refine()
             

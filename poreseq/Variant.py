@@ -13,7 +13,7 @@ def Variant(ref_fasta, bamfile, fast5dir, var_fasta=None, muts=None, region=None
     
     This function is the main one called by the setuptools entry points for
     variant calling, that is, 
-        main() -> variant() -> Variant(...) -> PoissAlign.stuff(...)
+        main() -> variant() -> Variant(...) -> PSAlign.stuff(...)
         
     If you want to use variant calling from within Python, it's probably much
     easier just to do it by hand; copy the bottom part of this function.

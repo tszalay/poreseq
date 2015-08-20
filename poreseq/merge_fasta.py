@@ -2,7 +2,7 @@ import sys
 import os
 from Bio import SeqIO
 from Util import RegionInfo
-from poisscpp import swalign
+from poreseqcpp import swalign
 import pdb
 
 def merge_seqs(seq1, seq2, overlap):

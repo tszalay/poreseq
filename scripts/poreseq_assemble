@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ $# -lt 1 ]; then
+    echo "usage: poreseq_assemble <reads fasta> [celera options]"
+    exit
+fi
+
+# first, convert fasta file to fastq with blank qual
+java -jar ~/github/poreseq/scripts/convertFastaAndQualToFastq.jar $1 > $1.fastq
+# next, call celera with custom spec file, passing through rest of arguments
+PBcR -length 500 -l assembly -s ~/github/poreseq/poreseq.spec -fastq $1.fastq  "${@:2}"

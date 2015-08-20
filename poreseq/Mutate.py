@@ -1,7 +1,7 @@
 import numpy as np
 from LoadData import LoadAlignedEvents
 from Util import RegionInfo
-import poisscpp
+import poreseqcpp
 import pdb
 import sys
 
@@ -10,9 +10,9 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test
     
     This function is the main one called by the setuptools entry points for
     consensus calling, that is, 
-        main() -> consensus() -> Mutate(...) -> PoissAlign.Mutate(...)
+        main() -> consensus() -> Mutate(...) -> PSAlign.Mutate(...)
         
-    Use this function if you want to basically run poisson consensus from
+    Use this function if you want to basically run poreseq consensus from
     within Python.
     
     It takes care of loading events and mutating in different ways, and if the test
@@ -59,18 +59,18 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test
     if test:
         seq = ""
         for ev in pa.events:
-            pairs = poisscpp.swalign(ev.sequence,refseq)[1]
+            pairs = poreseqcpp.swalign(ev.sequence,refseq)[1]
             if pairs[-1][1]-pairs[0][1] > len(seq):
                 seq = ev.sequence[pairs[0][0]:pairs[-1][0]]
         pa.sequence = seq
 
     if test:
-        sys.stderr.write("Starting accuracy: " + str(round(poisscpp.swalign(pa.sequence,refseq)[0],1)) + "%\n")
+        sys.stderr.write("Starting accuracy: " + str(round(poreseqcpp.swalign(pa.sequence,refseq)[0],1)) + "%\n")
 
     pa.Mutate(reps=reps)
     
     if verbose>0:
-        acc = poisscpp.swalign(pa.sequence,refseq)[0]
+        acc = poreseqcpp.swalign(pa.sequence,refseq)[0]
         sys.stderr.write("Accuracy: " + str(round(acc,1)) + "%\n")
 
     for i in range(reps):
@@ -79,7 +79,7 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test
         nbases = pa.Refine()
         
         if verbose>0:
-            acc = poisscpp.swalign(pa.sequence,refseq)[0]
+            acc = poreseqcpp.swalign(pa.sequence,refseq)[0]
             sys.stderr.write("Accuracy: " + str(round(acc,1)) + "%\n")
         if nbases == 0:
             break
@@ -90,7 +90,7 @@ def Mutate(fastafile, bamfile, fast5dir, region=None, params={}, verbose=0, test
 
         
     # find the aligned sequence stats
-    acc,inds = poisscpp.swalign(pa.sequence,refseq)
+    acc,inds = poreseqcpp.swalign(pa.sequence,refseq)
 
     if verbose>0:
         errs = np.sum(np.array(inds)==0,0)

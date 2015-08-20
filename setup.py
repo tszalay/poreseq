@@ -5,23 +5,23 @@ from Cython.Distutils import build_ext
 import numpy
 
 setup(
-    name="poisson",
+    name="poreseq",
     version="0.1",
-    description="POISSON alignment utility for nanopore sequencing data",
+    description="PoreSeq alignment utility for nanopore sequencing data",
     author="Tamas Szalay",
     packages=find_packages(),
     install_requires=["Cython>0.18","Biopython>1.6", "pysam>0.8.2"],
     scripts=[
-        'scripts/poissalign',
-        'scripts/poissemble'
+        'scripts/poreseq_align',
+        'scripts/poreseq_assemble'
     ],
     entry_points={
         'console_scripts': [
-            'poisson = poisson.cmdline:main',
+            'poreseq = poreseq.cmdline:main',
         ]
     },
-    ext_modules=[Extension(name="poisson.poisscpp",
-                           sources=["poisson/_poisscpp.pyx",
+    ext_modules=[Extension(name="poreseq.poreseqcpp",
+                           sources=["poreseq/_poreseqcpp.pyx",
                                     "cpp/MakeMutations.cpp",
                                     "cpp/FindMutations.cpp",
                                     "cpp/Alignment.cpp",

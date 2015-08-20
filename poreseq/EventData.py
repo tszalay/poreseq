@@ -5,7 +5,6 @@ import copy
 from Bio.Seq import Seq
 
 
-
 def MakeContiguous(pyobj):
     """Makes all numpy fields of object into memory-contiguous arrays.
     
@@ -34,17 +33,17 @@ def LoadEvents(filenames):
     events = []
     for fn in filenames:
         try:
-            events.append(PoissEvent(fn,'t'))
+            events.append(PSEvent(fn,'t'))
         except Exception:
             pass
         try:
-            events.append(PoissEvent(fn,'c'))
+            events.append(PSEvent(fn,'c'))
         except Exception:
             pass
     return events
     
 
-class PoissModel:
+class PSModel:
     """Class containing all trained model parameters for a single event.
     
     Many of the parameters are loaded from the fast5 data, and the remaining
@@ -75,7 +74,7 @@ class PoissModel:
         self.name = ''
         self.complement = False
 
-class PoissEvent():
+class PSEvent():
     """Class containing all data associated with a single read.
     
     In this case, the template and complement of a single-molecule read will
@@ -93,7 +92,7 @@ class PoissEvent():
         start (double x N): start time of measured current values
         ref_align (double x N): reference base each current level aligns to
         ref_like (double x N): cumulative aligned likelihood at each current level        
-        model (PoissModel): model associated with this event
+        model (PSModel): model associated with this event
         sequence (string): extracted 2D sequence from fast5
         flipped (boolean): has this event been flipped?
     """
@@ -162,7 +161,7 @@ class PoissEvent():
         self.ref_align[alinds[lvlinds]] = seqinds[lvlinds]
         
         # load and scale model data
-        model = PoissModel();
+        model = PSModel();
         model.level_mean = modeldata['level_mean']*scale + shift
         model.level_stdv = modeldata['level_stdv']*var
         model.sd_mean = modeldata['sd_mean']*scalesd

@@ -22,7 +22,7 @@ def main():
     '''Main setuptools entry point for the program, handles commandline
     arguments using argparse'''
     
-    parser = argparse.ArgumentParser(prog='poisson')
+    parser = argparse.ArgumentParser(prog='poreseq')
     subparsers = parser.add_subparsers(help='Nanopore sequence consensus tool')
     
     # create consensus-calling parser

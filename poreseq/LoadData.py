@@ -4,14 +4,14 @@ import pdb
 import numpy as np
 from Bio import SeqIO
 
-from EventData import PoissEvent
-from poisson import poisscpp
+from EventData import PSEvent
+from poreseq import poreseqcpp
 
 def LoadAlignedEvents(fastafile, bamfile, eventdir, reginfo, params):
     """Load all of the events aligned to a reference using a bam file.
     
     This is the main function for loading events subject to various parameters
-    and constraints. The function returns a PoissAlign object defined in the
+    and constraints. The function returns a PSAlign object defined in the
     pyx file, which can then be used for subsequent processing.
     
     The params argument is particularly important here, for min_coverage,
@@ -25,7 +25,7 @@ def LoadAlignedEvents(fastafile, bamfile, eventdir, reginfo, params):
         params (param dict): parameters to use for loading
     
     Returns:
-        PoissAlign object containing reference sequence, aligned events, and params
+        PSAlign object containing reference sequence, aligned events, and params
     """
     # load the reference sequence    
     refseq = str(LoadReference(fastafile,reginfo.name))    
@@ -43,8 +43,8 @@ def LoadAlignedEvents(fastafile, bamfile, eventdir, reginfo, params):
     # take specified region of refseq
     refseq = refseq[reginfo.start:reginfo.end]
     
-    # create poissalign object with loaded settings
-    pa = poisscpp.PoissAlign()
+    # create psalign object with loaded settings
+    pa = poreseqcpp.PSAlign()
     pa.sequence = refseq
     pa.events = events
     pa.params = params
@@ -139,7 +139,7 @@ def EventsFromBAM(eventdir, bamfile, reginfo, params):
         # get the reads, template and complement, flip if necessary
         for loc in ['t','c']:
             try:
-                ev = PoissEvent(evfile,loc)
+                ev = PSEvent(evfile,loc)
                 if bamev.is_reverse:
                     ev.flip()
                 ev.mapaligns(aps)

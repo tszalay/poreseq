@@ -6,7 +6,7 @@ from cmdline import main
 from Util import RegionInfo, MutationInfo, MutationScore
 
 
-"""poisson - Python package for nanopore sequencing analysis
+"""poreseq - Python package for nanopore sequencing analysis
 
     by Tamas Szalay
 
