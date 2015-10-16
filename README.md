@@ -14,6 +14,17 @@ The recommended way to install poreseq is from the source using git and pip:
 2. In the main directory, run `pip install -e . --user` or `sudo pip install -e .`
 
 Note that for a userspace install, `~/.local/bin` needs to be on your PATH.
+
+Or, using virtualenv:
+
+1. Checkout the source: `git clone git://github.com/tszalay/poreseq.git`
+2. Create virtual environment: `virtualenv VE-PORESEQ`
+3. Activate it: `. VE-PORESEQ/bin/activate`
+4. Install numpy if needed: `pip install numpy`
+5. And Cython: `pip install cython`
+6. And poreseq into the virtual environment: `cd poreseq`
+7. `pip install -e .`
+
 The Python requirements are handled by setuptools, while some of the utility scripts depend on the LAST aligner and the Celera/PBcR assembler. If you would like
 to change these requirements, edit the scripts in the scripts/ folder (and reinstall). Note that the poreseq_assemble script, in addition to
 needing PBcR, also needs the correct path to poreseq.spec and should be updated as such.
