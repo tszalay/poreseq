@@ -10,7 +10,7 @@ setup(
     description="PoreSeq alignment utility for nanopore sequencing data",
     author="Tamas Szalay",
     packages=find_packages(),
-    install_requires=["Cython>0.18","Biopython>1.6", "pysam>0.8.2"],
+    install_requires=["Cython>0.18","Biopython>1.6", "pysam>0.8.2", "h5py>2.0"],
     scripts=[
         'scripts/poreseq_align',
         'scripts/poreseq_assemble'
