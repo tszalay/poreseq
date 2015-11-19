@@ -94,5 +94,12 @@ pa.ScoreEvents()
 print pa.events[2].ref_align[2000:3000]
 ```
 
-At the time of writing, “poreseq consensus” takes around 2 minutes to error-correct a 1 kb region at 10X coverage, meaning that it can take tens of hours on a single CPU to error-correct the fragments before assembling λ DNA. If the coverage is sufficient, it is more efficient to assemble without doing poreseq error correction, and then using poreseq to align and refine the resulting assembly as described above. Additionally, if only a specific region of the genome is desired, poreseq can simply error correct that region, greatly reducing the time required.
+At the time of writing, “poreseq consensus” takes around 2 minutes to error-correct a 1 kb region at 10X coverage, meaning that it can take tens of hours on a single CPU to error-correct the fragments before assembling λ DNA, or thousands of CPU-hours to correct bacterial genomes. If the coverage is sufficient, it is more efficient to assemble without doing poreseq error correction, and then using poreseq to align and refine the resulting assembly:
+
+* `poreseq_assemble allreads.fasta genomeSize=4650000 -t 4`
+* [copy assembled sequences to pbcr_assemblies.fasta]
+* `poreseq_align ./pbcr_assemblies.fasta ./allreads.fasta pbcr_aligns`
+* `poreseq consensus ./pbcr_assemblies.fasta ./pbcr_aligns.bam /media/run-33 -o pbcr_corrected.fasta [other flags]`
+
+Additionally, if only a specific region of the genome is desired, poreseq can simply error correct that region, greatly reducing the time required.
 
