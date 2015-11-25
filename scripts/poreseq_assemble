@@ -5,7 +5,9 @@ if [ $# -lt 1 ]; then
     exit
 fi
 
+DIR="$(python -c "import poreseq, os; print os.path.dirname(poreseq.__file__)")"
+
 # first, convert fasta file to fastq with blank qual
-java -jar ~/github/poreseq/scripts/convertFastaAndQualToFastq.jar $1 > $1.fastq
+java -jar $DIR/../resources/convertFastaAndQualToFastq.jar $1 > $1.fastq
 # next, call celera with custom spec file, passing through rest of arguments
-PBcR -length 500 -l assembly -s ~/github/poreseq/poreseq.spec -fastq $1.fastq  "${@:2}"
+PBcR -length 500 -l assembly -s $DIR/../resources/poreseq.spec -fastq $1.fastq  "${@:2}"

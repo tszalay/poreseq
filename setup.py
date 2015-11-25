@@ -13,8 +13,12 @@ setup(
     install_requires=["Cython>0.18","Biopython>1.6", "pysam>0.8.2", "h5py>2.0"],
     scripts=[
         'scripts/poreseq_align',
-        'scripts/poreseq_assemble'
+        'scripts/poreseq_assemble',
     ],
+    data_files=[
+        ('resources', ['poreseq.spec', 'scripts/convertFastaAndQualToFastq.jar']),
+    ],
+    zip_safe=False, # so that the resources can be fetched by the scripts
     entry_points={
         'console_scripts': [
             'poreseq = poreseq.cmdline:main',
