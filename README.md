@@ -7,6 +7,11 @@ The PoreSeq utility is an open source program and Python library for de novo seq
 * scoring known sequence variants on a given dataset
 * straightforward subdivision of processing for cluster/parallel tasks
 
+## Update
+
+As Jared Simpson explains in [this post](http://simpsonlab.github.io/2016/02/25/deprecating-nanocorrect/), there are many new tools available for assembling ONT data without having to do a cumbersome error-correction step using PoreSeq or nanocorrect. Users are encouraged to first assemble with those tools, followed with a post-assembly error correction/variant calling/etc using tools such as this one or [nanopolish](https://github.com/jts/nanopolish).
+
+
 ## Install
 The recommended way to install poreseq is from the source using git and pip:
 
